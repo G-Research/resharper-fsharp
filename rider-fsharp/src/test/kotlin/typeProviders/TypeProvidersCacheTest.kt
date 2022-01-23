@@ -3,7 +3,6 @@ package typeProviders
 import com.jetbrains.rdclient.testFramework.executeWithGold
 import com.jetbrains.rdclient.testFramework.waitForDaemon
 import com.jetbrains.rider.plugins.fsharp.test.dumpTypeProviders
-import com.jetbrains.rider.plugins.fsharp.test.withOutOfProcessTypeProviders
 import com.jetbrains.rider.test.annotations.TestEnvironment
 import com.jetbrains.rider.test.asserts.shouldBeTrue
 import com.jetbrains.rider.test.base.BaseTestWithSolution
@@ -34,64 +33,56 @@ class TypeProvidersCacheTest : BaseTestWithSolution() {
 
     @Test
     fun checkCachesWhenProjectReloading() {
-        withOutOfProcessTypeProviders {
-            checkTypeProviders(File(testGoldFile.path + "_before"))
+        checkTypeProviders(File(testGoldFile.path + "_before"))
 
-            unloadAllProjects()
-            reloadAllProjects(project)
+        unloadAllProjects()
+        reloadAllProjects(project)
 
-            checkTypeProviders(File(testGoldFile.path + "_after"))
-        }
+        checkTypeProviders(File(testGoldFile.path + "_after"))
     }
 
     @Test
     fun invalidation() {
         val testDirectory = File(project.basePath + "/TypeProviderLibrary/Test")
 
-        withOutOfProcessTypeProviders {
-            withOpenedEditor(project, sourceFile) {
-                waitForDaemon()
+        withOpenedEditor(project, sourceFile) {
+            waitForDaemon()
 
-                testDirectory.deleteRecursively().shouldBeTrue()
-                typeWithLatency("//")
-                waitForDaemon()
+            testDirectory.deleteRecursively().shouldBeTrue()
+            typeWithLatency("//")
+            waitForDaemon()
 
-                executeWithGold(File(testGoldFile.path + "_before")) {
-                    dumpTypeProviders(it)
-                }
+            executeWithGold(File(testGoldFile.path + "_before")) {
+                dumpTypeProviders(it)
+            }
 
-                testDirectory.mkdir().shouldBeTrue()
-                typeWithLatency(" ")
-                waitForDaemon()
+            testDirectory.mkdir().shouldBeTrue()
+            typeWithLatency(" ")
+            waitForDaemon()
 
-                executeWithGold(File(testGoldFile.path + "_after")) {
-                    dumpTypeProviders(it)
-                }
+            executeWithGold(File(testGoldFile.path + "_after")) {
+                dumpTypeProviders(it)
             }
         }
     }
 
     @Test
     fun typing() {
-        withOutOfProcessTypeProviders {
-            withOpenedEditor(project, sourceFile) {
-                waitForDaemon()
-                typeWithLatency("//")
-                checkTypeProviders(testGoldFile)
-            }
+        withOpenedEditor(project, sourceFile) {
+            waitForDaemon()
+            typeWithLatency("//")
+            checkTypeProviders(testGoldFile)
         }
     }
 
     @Test
     fun projectsWithEqualProviders() {
-        withOutOfProcessTypeProviders {
-            withOpenedEditor(project, "TypeProviderLibrary/Library.fs") {
-                waitForDaemon()
-            }
-            withOpenedEditor(project, "TypeProviderLibrary2/Library.fs") {
-                waitForDaemon()
-                checkTypeProviders(testGoldFile)
-            }
+        withOpenedEditor(project, "TypeProviderLibrary/Library.fs") {
+            waitForDaemon()
+        }
+        withOpenedEditor(project, "TypeProviderLibrary2/Library.fs") {
+            waitForDaemon()
+            checkTypeProviders(testGoldFile)
         }
     }
 }

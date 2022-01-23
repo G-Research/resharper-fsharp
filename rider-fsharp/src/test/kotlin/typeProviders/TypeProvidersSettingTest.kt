@@ -3,7 +3,7 @@ package typeProviders
 import com.jetbrains.rdclient.testFramework.waitForDaemon
 import com.jetbrains.rider.daemon.util.hasErrors
 import com.jetbrains.rider.plugins.fsharp.rdFSharpModel
-import com.jetbrains.rider.plugins.fsharp.test.withOutOfProcessTypeProviders
+import com.jetbrains.rider.plugins.fsharp.test.withDisabledOutOfProcessTypeProviders
 import com.jetbrains.rider.projectView.solution
 import com.jetbrains.rider.test.annotations.TestEnvironment
 import com.jetbrains.rider.test.asserts.shouldBeFalse
@@ -26,10 +26,19 @@ class TypeProvidersSettingTest : BaseTestWithSolution() {
     fun enableTypeProvidersSetting() {
         val sourceFile = "TypeProviderLibrary/Library.fs"
 
-        withOutOfProcessTypeProviders {
+        withOpenedEditor(project, sourceFile) {
+            waitForDaemon()
+            rdFcsHost.typeProvidersRuntimeVersion.sync(Unit).shouldNotBeNull()
+            markupAdapter.hasErrors.shouldBeFalse()
+        }
+
+        withDisabledOutOfProcessTypeProviders {
+            unloadAllProjects()
+            reloadAllProjects(project)
+
             withOpenedEditor(project, sourceFile) {
                 waitForDaemon()
-                rdFcsHost.typeProvidersRuntimeVersion.sync(Unit).shouldNotBeNull()
+                rdFcsHost.typeProvidersRuntimeVersion.sync(Unit).shouldBeNull()
                 markupAdapter.hasErrors.shouldBeFalse()
             }
         }
@@ -39,19 +48,8 @@ class TypeProvidersSettingTest : BaseTestWithSolution() {
 
         withOpenedEditor(project, sourceFile) {
             waitForDaemon()
-            rdFcsHost.typeProvidersRuntimeVersion.sync(Unit).shouldBeNull()
+            rdFcsHost.typeProvidersRuntimeVersion.sync(Unit).shouldNotBeNull()
             markupAdapter.hasErrors.shouldBeFalse()
-        }
-
-        unloadAllProjects()
-        reloadAllProjects(project)
-
-        withOutOfProcessTypeProviders {
-            withOpenedEditor(project, sourceFile) {
-                waitForDaemon()
-                rdFcsHost.typeProvidersRuntimeVersion.sync(Unit).shouldNotBeNull()
-                markupAdapter.hasErrors.shouldBeFalse()
-            }
         }
     }
 }
