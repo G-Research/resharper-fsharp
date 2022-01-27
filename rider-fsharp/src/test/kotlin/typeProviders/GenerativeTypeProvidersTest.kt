@@ -3,6 +3,7 @@ package typeProviders
 import com.jetbrains.rdclient.testFramework.waitForDaemon
 import com.jetbrains.rdclient.testFramework.waitForNextDaemon
 import com.jetbrains.rider.daemon.util.hasErrors
+import com.jetbrains.rider.plugins.fsharp.test.assertTypeProvidersProcessCount
 import com.jetbrains.rider.projectView.solutionDirectoryPath
 import com.jetbrains.rider.test.annotations.TestEnvironment
 import com.jetbrains.rider.test.asserts.shouldBeFalse
@@ -40,5 +41,7 @@ class GenerativeTypeProvidersTest : BaseTestWithSolution() {
             waitForDaemon()
             markupAdapter.hasErrors.shouldBeFalse()
         }
+
+        assertTypeProvidersProcessCount(1)
     }
 }

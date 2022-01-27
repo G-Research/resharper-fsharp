@@ -3,6 +3,7 @@ package typeProviders
 import com.jetbrains.rdclient.testFramework.waitForDaemon
 import com.jetbrains.rider.daemon.util.hasErrors
 import com.jetbrains.rider.plugins.fsharp.rdFSharpModel
+import com.jetbrains.rider.plugins.fsharp.test.assertTypeProvidersProcessCount
 import com.jetbrains.rider.plugins.fsharp.test.withDisabledOutOfProcessTypeProviders
 import com.jetbrains.rider.projectView.solution
 import com.jetbrains.rider.test.annotations.TestEnvironment
@@ -30,6 +31,7 @@ class TypeProvidersSettingTest : BaseTestWithSolution() {
             waitForDaemon()
             rdFcsHost.typeProvidersRuntimeVersion.sync(Unit).shouldNotBeNull()
             markupAdapter.hasErrors.shouldBeFalse()
+            assertTypeProvidersProcessCount(1)
         }
 
         withDisabledOutOfProcessTypeProviders {
@@ -40,6 +42,7 @@ class TypeProvidersSettingTest : BaseTestWithSolution() {
                 waitForDaemon()
                 rdFcsHost.typeProvidersRuntimeVersion.sync(Unit).shouldBeNull()
                 markupAdapter.hasErrors.shouldBeFalse()
+                assertTypeProvidersProcessCount(0)
             }
         }
 
@@ -50,6 +53,7 @@ class TypeProvidersSettingTest : BaseTestWithSolution() {
             waitForDaemon()
             rdFcsHost.typeProvidersRuntimeVersion.sync(Unit).shouldNotBeNull()
             markupAdapter.hasErrors.shouldBeFalse()
+            assertTypeProvidersProcessCount(1)
         }
     }
 }

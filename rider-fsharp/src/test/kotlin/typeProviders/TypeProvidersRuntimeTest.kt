@@ -2,6 +2,7 @@ package typeProviders
 
 import com.jetbrains.rdclient.testFramework.waitForDaemon
 import com.jetbrains.rider.daemon.util.hasErrors
+import com.jetbrains.rider.plugins.fsharp.test.assertTypeProvidersProcessCount
 import com.jetbrains.rider.plugins.fsharp.test.fcsHost
 import com.jetbrains.rider.test.annotations.TestEnvironment
 import com.jetbrains.rider.test.asserts.shouldBeFalse
@@ -60,5 +61,7 @@ class TypeProvidersRuntimeTest : BaseTestWithSolution() {
                     .shouldBeTrue()
             markupAdapter.hasErrors.shouldBeFalse()
         }
+
+        assertTypeProvidersProcessCount(1)
     }
 }

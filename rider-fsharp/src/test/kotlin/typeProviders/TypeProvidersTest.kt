@@ -2,6 +2,7 @@ package typeProviders
 
 import com.jetbrains.rdclient.testFramework.executeWithGold
 import com.jetbrains.rdclient.testFramework.waitForDaemon
+import com.jetbrains.rider.plugins.fsharp.test.assertTypeProvidersProcessCount
 import com.jetbrains.rider.test.annotations.TestEnvironment
 import com.jetbrains.rider.test.base.BaseTestWithSolution
 import com.jetbrains.rider.test.enums.CoreVersion
@@ -39,5 +40,7 @@ class TypeProvidersTest : BaseTestWithSolution() {
                 dumpSevereHighlighters(it)
             }
         }
+
+        assertTypeProvidersProcessCount(1)
     }
 }

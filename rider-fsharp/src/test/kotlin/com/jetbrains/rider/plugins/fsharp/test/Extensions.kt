@@ -1,5 +1,6 @@
 package com.jetbrains.rider.plugins.fsharp.test
 
+import com.intellij.execution.process.impl.ProcessListUtil
 import com.intellij.openapi.project.Project
 import com.jetbrains.rdclient.protocol.protocolHost
 import com.jetbrains.rider.inTests.TestHost
@@ -7,6 +8,7 @@ import com.jetbrains.rider.plugins.fsharp.rdFSharpModel
 import com.jetbrains.rider.projectView.solution
 import com.jetbrains.rider.test.base.BaseTestWithSolution
 import com.jetbrains.rider.test.scriptingApi.dumpSevereHighlighters
+import org.testng.Assert
 import java.io.PrintStream
 
 fun com.intellij.openapi.editor.Editor.dumpTypeProviders(stream: PrintStream) {
@@ -30,6 +32,13 @@ fun BaseTestWithSolution.withDisabledOutOfProcessTypeProviders(function: () -> U
     withSetting(project, "FSharp/FSharpOptions/FSharpExperimentalFeatures/OutOfProcessTypeProviders/@EntryValue", "false", "true") {
         function()
     }
+}
+
+fun assertTypeProvidersProcessCount(expected: Int) {
+    val actual = ProcessListUtil
+            .getProcessList()
+            .count { it.executableName.startsWith("JetBrains.ReSharper.Plugins.FSharp.TypeProviders.Host") }
+    Assert.assertEquals(actual, expected)
 }
 
 fun withEditorConfig(project: Project, function: () -> Unit) {

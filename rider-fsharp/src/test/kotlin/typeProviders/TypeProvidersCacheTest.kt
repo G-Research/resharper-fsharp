@@ -2,6 +2,7 @@ package typeProviders
 
 import com.jetbrains.rdclient.testFramework.executeWithGold
 import com.jetbrains.rdclient.testFramework.waitForDaemon
+import com.jetbrains.rider.plugins.fsharp.test.assertTypeProvidersProcessCount
 import com.jetbrains.rider.plugins.fsharp.test.dumpTypeProviders
 import com.jetbrains.rider.test.annotations.TestEnvironment
 import com.jetbrains.rider.test.asserts.shouldBeTrue
@@ -29,6 +30,8 @@ class TypeProvidersCacheTest : BaseTestWithSolution() {
                 dumpTypeProviders(it)
             }
         }
+
+        assertTypeProvidersProcessCount(1)
     }
 
     @Test
