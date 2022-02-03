@@ -2,6 +2,7 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Services.Formatter
 
 open FSharp.Compiler.CodeAnalysis
 open FSharp.Compiler.Text
+open JetBrains.Application.Notifications
 open JetBrains.Core
 open JetBrains.Lifetimes
 open JetBrains.ProjectModel
@@ -20,20 +21,29 @@ module internal Reflection =
 
 
 [<SolutionComponent>]
-type FantomasHost(solution: ISolution, fantomasFactory: FantomasProcessFactory) =
+type FantomasHost(solution: ISolution, fantomasFactory: FantomasProcessFactory, fantomasDetector: FantomasDetector) =
+    let solutionLifetime = solution.GetLifetime()
     let mutable connection: FantomasConnection = null
     let mutable formatConfigFields: string[] = [||]
+    let mutable formatterHostLifetime: LifetimeDefinition = null
 
     let toEditorConfigName name = $"{fSharpEditorConfigPrefix}{StringUtil.MakeUnderscoreCaseName(name)}"
 
     let isConnectionAlive () =
         isNotNull connection && connection.IsActive
 
+    let terminateConnection () =
+        if isConnectionAlive () then formatterHostLifetime.Terminate()
+
+    // Formatting is called on UI thread, so we don't need to synchronize it
     let connect () =
         if isConnectionAlive () then () else
-        let formatterHostLifetime = Lifetime.Define(solution.GetLifetime())
-        connection <- fantomasFactory.Create(formatterHostLifetime.Lifetime).Run()
-        formatConfigFields <- connection.Execute(fun x -> connection.ProtocolModel.GetFormatConfigFields.Sync(Unit.Instance))
+
+        fantomasDetector.TryRun(fun path ->
+            formatterHostLifetime <- Lifetime.Define(solutionLifetime)
+            connection <- fantomasFactory.Create(formatterHostLifetime.Lifetime, path).Run()
+            formatConfigFields <- connection.Execute(fun x -> connection.ProtocolModel.GetFormatConfigFields.Sync(Unit.Instance))
+        )
 
     let convertRange (range: range) =
         RdFcsRange(range.FileName, range.StartLine, range.StartColumn, range.EndLine, range.EndColumn)
@@ -55,6 +65,8 @@ type FantomasHost(solution: ISolution, fantomasFactory: FantomasProcessFactory) 
         let lightSyntax = Option.toNullable options.LightSyntax
         RdFcsParsingOptions(Array.last options.SourceFiles, lightSyntax,
             List.toArray options.ConditionalCompilationDefines, options.IsExe)
+
+    do fantomasDetector.VersionToRun.Advise(solutionLifetime, fun _ -> terminateConnection ())
 
     member x.FormatSelection(filePath, range, source, settings, options, newLineText) =
         let args =

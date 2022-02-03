@@ -45,6 +45,17 @@ type FSharpOptions =
       [<SettingsEntry(true, topLevelOpenCompletion); DefaultValue>]
       mutable TopLevelOpenCompletion: bool }
 
+type FantomasVersionSettings =
+    | AutoDetected = 0
+    | SolutionDotnetTool = 1
+    | GlobalDotnetTool = 2
+    | Bundled = 3
+
+[<SettingsKey(typeof<FSharpSettings>, "FSharpFantomasOptions")>]
+type FSharpFantomasOptions =
+    { [<SettingsEntry(true, "Fantomas version"); DefaultValue>]
+      mutable Version: FantomasVersionSettings }
+
 
 module FSharpScriptOptions =
     let [<Literal>] languageVersion = "Language version"
@@ -129,6 +140,13 @@ type FSharpOptionsProvider(lifetime, solution, settings, settingsSchema) =
     inherit FSharpSettingsProviderBase<FSharpOptions>(lifetime, solution, settings, settingsSchema)
 
     member val NonFSharpProjectInMemoryAnalysis = base.GetValueProperty<bool>("NonFSharpProjectInMemoryAnalysis")
+
+
+[<SolutionInstanceComponent>]
+type FSharpFantomasSettingsProvider(lifetime, solution, settings, settingsSchema) =
+    inherit FSharpSettingsProviderBase<FSharpFantomasOptions>(lifetime, solution, settings, settingsSchema)
+
+    member val Version = base.GetValueProperty<FantomasVersionSettings>("Version")
 
 
 module FSharpTypeHintOptions =

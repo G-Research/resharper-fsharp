@@ -7,6 +7,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="src\CodeStyle\FSharpCodeStylePage.fs" />
+    <Compile Include="src\CodeStyle\FantomasOptionsPage.fs" />
     <Compile Include="src\Util\FSharpVisualElementFactory.fs" />
     <Compile Include="src\CodeCompletion\FSharpCompletionUtil.fs" />
     <Compile Include="src\CodeCompletion\FSharpCodeCompletionContext.fs" />
