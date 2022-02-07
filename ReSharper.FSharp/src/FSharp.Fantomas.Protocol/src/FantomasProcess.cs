@@ -16,7 +16,7 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Fantomas.Protocol
 {
   public class FantomasProcess : ProtocolExternalProcess<RdFantomasModel, FantomasConnection>
   {
-    private readonly string mySpecifiedPath;
+    private readonly VirtualFileSystemPath mySpecifiedPath;
     protected override string Name => "Fantomas";
 
     private static readonly FileSystemPath FantomasDirectory =
@@ -58,7 +58,7 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Fantomas.Protocol
         },
         {
           "FSHARP_FANTOMAS_ASSEMBLIES_PATH",
-          string.IsNullOrEmpty(mySpecifiedPath) ? FantomasDirectory.FullPath : throw new InvalidOperationException("FANTOMAS")
+          mySpecifiedPath?.FullPath ?? FantomasDirectory.FullPath
         },
       };
     }
@@ -70,7 +70,7 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Fantomas.Protocol
     }
 
     public FantomasProcess(Lifetime lifetime, ILogger logger, IShellLocks locks,
-      IProcessStartInfoPatcher processInfoPatcher, JetProcessRuntimeRequest request, string specifiedPath = null)
+      IProcessStartInfoPatcher processInfoPatcher, JetProcessRuntimeRequest request, VirtualFileSystemPath specifiedPath = null)
       : base(lifetime, logger, locks, processInfoPatcher, request, InteractionContext.SolutionContext)
     {
       mySpecifiedPath = specifiedPath;

@@ -9,6 +9,7 @@ open JetBrains.Application.UI.Options
 open JetBrains.Application.UI.Options.OptionsDialog
 open JetBrains.Collections.Viewable
 open JetBrains.ProjectModel
+open JetBrains.ProjectModel.NuGet.DotNetTools
 open JetBrains.ReSharper.Plugins.FSharp.Settings
 open JetBrains.ReSharper.Resources.Resources.Icons
 open JetBrains.IDE.UI.Extensions
@@ -26,7 +27,6 @@ type FantomasValidationResult =
     | FailedToRun
     | UnsupportedVersion
     | SelectedButNotFound
-    | NotFound
 
 type FantomasVersion =
     | Bundled
@@ -35,7 +35,7 @@ type FantomasVersion =
 
 type FantomasRunSettings =
     { Version: FantomasVersion * string
-      Path: string
+      Path: VirtualFileSystemPath
       mutable Status: FantomasValidationResult }
 
 type FantomasDiagnosticNotification =
@@ -44,21 +44,22 @@ type FantomasDiagnosticNotification =
       FallbackVersion: FantomasVersion }
 
 [<SolutionInstanceComponent>]
-type FantomasDetector(lifetime, settingsProvider: FSharpFantomasSettingsProvider) =
-    let minimalSupportedVersion = Version(minimalSupportedVersion)
+type FantomasDetector(lifetime, settingsProvider: FSharpFantomasSettingsProvider,
+                      dotnetToolsTracker: NuGetDotnetToolsTracker) =
+    let [<Literal>] fantomasToolPackageId = "fantomas-tool"
+    let [<Literal>] fantomasPackageId = "fantomas"
+    let minimalSupportedVersion1 = Version(minimalSupportedVersion)
     let notificationSignal = Signal<FantomasDiagnosticNotification>()
     let rwLock = JetFastSemiReenterableRWLock()
 
     let notificationsFired =
-       let hashset = HashSet<FantomasVersion>()
+       let hashset = HashSet(3)
        hashset.Add(FantomasVersion.Bundled) |> ignore
        hashset
 
     let settingsData =
         let dict = Dictionary(3)
-        dict[Bundled] <- { Version = Bundled, "4.5.11"; Path = null; Status = Ok }
-        dict[SolutionDotnetTool] <- { Version = SolutionDotnetTool, "1.1.1"; Path = "path1"; Status = Ok }
-        dict[GlobalDotnetTool] <- { Version = GlobalDotnetTool, "1.1.1"; Path = "path2"; Status = Ok }
+        dict[Bundled] <- { Version = Bundled, minimalSupportedVersion; Path = null; Status = Ok }
         dict
 
     let mutable versionToRun = ViewableProperty(settingsData[Bundled])
@@ -108,36 +109,62 @@ type FantomasDetector(lifetime, settingsProvider: FSharpFantomasSettingsProvider
         delayedNotifications <- warnings
 
     let validate version =
-        //if Version.Parse(version) < minimalSupportedVersion then UnsupportedVersion
-        //else Ok
-        Ok
+        match Version.TryParse(version) with
+        | true, version when version >= minimalSupportedVersion1 -> Ok
+        | _ -> UnsupportedVersion
+
+    let invalidateDotnetTool toolVersion toolInfo  =
+        match toolInfo with
+        | Some (version, pathToExecutable) ->
+            match settingsData.TryGetValue toolVersion with
+            | true, { Version = _, cachedVersion } when version = cachedVersion -> ()
+            | _ ->
+                settingsData.Remove toolVersion |> ignore
+                notificationsFired.Remove toolVersion |> ignore
+                settingsData.Add(toolVersion, { Version = toolVersion, version; Path = pathToExecutable; Status = validate version })
+        | _ ->
+            settingsData.Remove toolVersion |> ignore
+            notificationsFired.Remove toolVersion |> ignore
+    
+    let invalidateDotnetTools (cache: ToolManifestCache) selectedVersion =
+        cache.LocalToolManifestInfo.Tools
+        |> Seq.tryFind (fun x -> x.Info.PackageId = fantomasPackageId || x.Info.PackageId = fantomasToolPackageId)
+        |> Option.map (fun x -> x.Info.Version, x.PathToExecutable)
+        |> invalidateDotnetTool SolutionDotnetTool
+
+        cache.GlobalToolManifests
+        |> Seq.tryFind (fun x -> x.Name = fantomasPackageId || x.Name = fantomasToolPackageId)
+        |> Option.map (fun x -> "", (null: VirtualFileSystemPath))
+        |> invalidateDotnetTool GlobalDotnetTool
+
+        match selectedVersion with
+        | FantomasVersionSettings.SolutionDotnetTool ->
+            if settingsData.ContainsKey SolutionDotnetTool then () else
+            settingsData[SolutionDotnetTool] <- { Version = SolutionDotnetTool, ""; Path = null; Status = SelectedButNotFound }
+        | FantomasVersionSettings.GlobalDotnetTool ->
+            if settingsData.ContainsKey GlobalDotnetTool then () else
+            settingsData.Add(GlobalDotnetTool, { Version = GlobalDotnetTool, ""; Path = null; Status = SelectedButNotFound })
+        | _ -> ()
 
     do
-        if isNull settingsProvider then () else
+        if isNull settingsProvider || isNull dotnetToolsTracker then () else
 
         settingsProvider.Version.Change.Advise(lifetime, fun x ->
             if not x.HasNew then () else
             use _ = rwLock.UsingWriteLock()
             recalculateState x.New)
+        
+        dotnetToolsTracker.ToolManifestCache.Change.Advise(lifetime, fun x ->
+            if not x.HasNew || isNull x.New then () else
+            use _ = rwLock.UsingWriteLock()
+            let settingsVersion = settingsProvider.Version.Value
+            invalidateDotnetTools x.New settingsVersion
+            recalculateState settingsVersion)
 
-        use _ = rwLock.UsingWriteLock()
-        let dotnetToolVersions = HashSet<FantomasVersion>()
-        dotnetToolVersions.Add(FantomasVersion.SolutionDotnetTool) |> ignore
+    static member Create(lifetime) =
+        FantomasDetector(lifetime, Unchecked.defaultof<FSharpFantomasSettingsProvider>, Unchecked.defaultof<NuGetDotnetToolsTracker>)
 
-        let selectedVersionString = "1.2.3"
-        let selectedVersionByUser = settingsProvider.Version.Value
-
-        //TODO: replace with real one
-        //TODO: move to separate function
-        for version in dotnetToolVersions do
-            let versionString = "1.2.3"
-            let path = "фывфыв"
-            settingsData[version] <-
-                { Version = version, versionString; Path = path; Status = validate versionString }
-
-    static member Create(lifetime) = FantomasDetector(lifetime, Unchecked.defaultof<FSharpFantomasSettingsProvider>)
-
-    member x.TryRun(runAction: string -> unit) =
+    member x.TryRun(runAction: VirtualFileSystemPath -> unit) =
         use _ = rwLock.UsingWriteLock()
         fireNotifications()
         let { Path = path } = versionToRun.Value
@@ -172,7 +199,6 @@ type FantomasPage(lifetime, smartContext: OptionsSettingsSmartContext, optionsPa
                   [<Optional; DefaultParameterValue(null: ISolution)>] solution: ISolution,
                   uiApplication: IUIApplication) as this =
     inherit FSharpOptionsPageBase(lifetime, optionsPageContext, smartContext)
-    let _ = PsiFeaturesUnsortedOptionsThemedIcons.Indent // workaround to create assembly reference (dotnet/fsharp#3522)
 
     let fantomasDetector =
         if isNull solution then FantomasDetector.Create(lifetime) else solution.GetComponent<FantomasDetector>()
@@ -199,8 +225,7 @@ type FantomasPage(lifetime, smartContext: OptionsSettingsSmartContext, optionsPa
             | Ok -> $" (v.{version})"
             | FailedToRun -> $" (v.{version} failed to run)"
             | UnsupportedVersion -> $" (v.{version} not supported)"
-            | SelectedButNotFound
-            | NotFound -> " (not found)"
+            | SelectedButNotFound -> " (not found)"
 
         RichTextModel(List [| RichStringModel(description); RichStringModel(version, ThemeColorId(ColorId.Gray))|])
             .GetBeRichText() :> BeControl
@@ -222,12 +247,8 @@ type FantomasPage(lifetime, smartContext: OptionsSettingsSmartContext, optionsPa
         let beComboBoxFromEnum =
             key.GetBeComboBoxFromEnum(lifetime,
                 PresentComboItem (fun x y z -> formatSettingItem y settingsData),
-                seq {
-                    if not (settingsData.ContainsKey FantomasVersionSettings.SolutionDotnetTool) then
-                        FantomasVersionSettings.SolutionDotnetTool
-                    if not (settingsData.ContainsKey FantomasVersionSettings.GlobalDotnetTool) then
-                        FantomasVersionSettings.GlobalDotnetTool
-                }
+                seq { FantomasVersionSettings.SolutionDotnetTool
+                      FantomasVersionSettings.GlobalDotnetTool } |> Seq.filter (not << settingsData.ContainsKey)
             )
         let beComboBoxFromEnum = beComboBoxFromEnum.WithValidationRule(lifetime, (fun () ->
             let res = validate beComboBoxFromEnum settingsData
@@ -257,9 +278,10 @@ type FantomasPage(lifetime, smartContext: OptionsSettingsSmartContext, optionsPa
 
 [<SolutionComponent>]
 type FantomasNotificationsManager(lifetime, settings: FantomasDetector, notifications: UserNotifications,
-                                  optionsManager: OptionsManager) =
+                                  optionsManager: OptionsManager, dotnetToolsTracker: NuGetDotnetToolsTracker) =
     let goToSettings = [| UserNotificationCommand("Settings", fun _ -> optionsManager.BeginShowOptions(nameof(FantomasPage))) |]
-    let openDotnetToolsOrGoToSettings = [| UserNotificationCommand("Open dotnet-tools.json", fun _ -> ()); goToSettings[0] |]
+    let openDotnetToolsOrGoToSettings toolsManifestPath =
+        [| UserNotificationCommand("Open dotnet-tools.json", fun _ -> ()); goToSettings[0] |]
 
     let createFallbackMessage = function
         | SolutionDotnetTool -> ""
@@ -272,11 +294,10 @@ type FantomasNotificationsManager(lifetime, settings: FantomasDetector, notifica
         match event with
         | SelectedButNotFound ->
             match version with
-            //TODO: change message
             | FantomasVersion.SolutionDotnetTool ->
-                $"""Fantomas version specified in "dotnet-tool.json" is not installed.<br>{fallbackMessage}"""
+                $"""dotnet-tools.json file not found in the solution directory.<br>{fallbackMessage}"""
             | FantomasVersion.GlobalDotnetTool ->
-                $"""Fantomas is not installed globally via 'dotnet tool install fantomas-tool' is not found.<br>{fallbackMessage}<br>Supported versions: {minimalSupportedVersion} and later."""
+                $"""Fantomas is not installed globally.<br>{fallbackMessage}<br>Supported versions: {minimalSupportedVersion} and later."""
             | _ -> ""
 
         | FailedToRun ->
@@ -297,7 +318,10 @@ type FantomasNotificationsManager(lifetime, settings: FantomasDetector, notifica
         | _ -> ""
 
     let getCommands = function
-        | FantomasVersion.SolutionDotnetTool -> openDotnetToolsOrGoToSettings
+        | FantomasVersion.SolutionDotnetTool ->
+            let manifestPath = dotnetToolsTracker.GetSolutionManifestPath()
+            if manifestPath.ExistsFile then openDotnetToolsOrGoToSettings manifestPath
+            else goToSettings    
         | _ -> goToSettings
 
     let createNotification notification =
