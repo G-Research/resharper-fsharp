@@ -2,6 +2,7 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Services.Formatter
 
 open System
 open System.Collections.Generic
+open System.IO
 open System.Runtime.InteropServices
 open JetBrains.Application.Notifications
 open JetBrains.Application.UI.Components
@@ -52,6 +53,9 @@ type FantomasDetector(lifetime, settingsProvider: FSharpFantomasSettingsProvider
     let minimalSupportedVersion = Version(MinimalSupportedVersion)
     let notificationSignal = Signal<FantomasDiagnosticNotification>()
     let rwLock = JetFastSemiReenterableRWLock()
+
+    let calculateGlobalFantomasToolPath version =
+        Path.Combine(CliFolderPathCalculator.ToolPackageFolderPath, fantomasToolPackageId, version, fantomasToolPackageId, version, "tools", "netcoreapp3.1", "any", "Fantomas.dll")
 
     let notificationsFired =
        let hashset = HashSet(3)
@@ -112,7 +116,7 @@ type FantomasDetector(lifetime, settingsProvider: FSharpFantomasSettingsProvider
     let validate version (pathToExecutable: VirtualFileSystemPath) =
         match Version.TryParse(version) with
         | true, version when version >= minimalSupportedVersion ->
-            if isNotNull pathToExecutable && pathToExecutable.ExistsFile then Ok else FailedToRun
+            if isNotNull pathToExecutable && pathToExecutable.ExistsDirectory then Ok else FailedToRun
         | _ -> UnsupportedVersion
 
     let invalidateDotnetTool toolVersion toolInfo =
@@ -137,17 +141,21 @@ type FantomasDetector(lifetime, settingsProvider: FSharpFantomasSettingsProvider
         |> invalidateDotnetTool SolutionDotnetTool
 
         cache.GlobalToolManifests
-        |> Seq.tryFind (fun x -> x.Name = fantomasPackageId || x.Name = fantomasToolPackageId)
-        |> Option.map (fun x -> "", (null: VirtualFileSystemPath))
+        |> Seq.tryFind (fun x -> (x.Name = fantomasPackageId || x.Name = fantomasToolPackageId) && x.Versions.Count > 0)
+        |> Option.map (fun x ->
+            let version = (Seq.max x.Versions).OriginalVersion
+            version, VirtualFileSystemPath.Parse(calculateGlobalFantomasToolPath version, InteractionContext.Local))
         |> invalidateDotnetTool GlobalDotnetTool
 
         match selectedVersion with
         | FantomasVersionSettings.SolutionDotnetTool ->
             if versionsData.ContainsKey(SolutionDotnetTool) then () else
             versionsData.Add(SolutionDotnetTool, { Version = SolutionDotnetTool, ""; Path = null; Status = SelectedButNotFound })
+
         | FantomasVersionSettings.GlobalDotnetTool ->
             if versionsData.ContainsKey(GlobalDotnetTool) then () else
             versionsData.Add(GlobalDotnetTool, { Version = GlobalDotnetTool, ""; Path = null; Status = SelectedButNotFound })
+
         | _ -> ()
 
     do
