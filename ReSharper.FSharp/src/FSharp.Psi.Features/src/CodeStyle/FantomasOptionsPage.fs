@@ -19,7 +19,7 @@ open JetBrains.Threading
 open JetBrains.IDE.UI.Extensions.Validation
 
 [<AutoOpen>]
-module private FantomasLiterals =
+module private FantomasVersions =
     let [<Literal>] MinimalSupportedVersion = "3.2"
     let [<Literal>] BundledVersion = "4.5.11"
 
@@ -109,20 +109,23 @@ type FantomasDetector(lifetime, settingsProvider: FSharpFantomasSettingsProvider
         versionToRun.Value <- version
         delayedNotifications <- warnings
 
-    let validate version =
+    let validate version (pathToExecutable: VirtualFileSystemPath) =
         match Version.TryParse(version) with
-        | true, version when version >= minimalSupportedVersion -> Ok
+        | true, version when version >= minimalSupportedVersion ->
+            if isNotNull pathToExecutable && pathToExecutable.ExistsFile then Ok else FailedToRun
         | _ -> UnsupportedVersion
 
-    let invalidateDotnetTool toolVersion toolInfo  =
+    let invalidateDotnetTool toolVersion toolInfo =
         match toolInfo with
-        | Some (version, pathToExecutable) ->
+        | Some (version, pathToExecutable: VirtualFileSystemPath) ->
             match versionsData.TryGetValue(toolVersion) with
             | true, { Version = _, cachedVersion } when version = cachedVersion -> ()
             | _ ->
                 versionsData.Remove(toolVersion) |> ignore
                 notificationsFired.Remove(toolVersion) |> ignore
-                versionsData.Add(toolVersion, { Version = toolVersion, version; Path = pathToExecutable; Status = validate version })
+                let fantomasDirectory = if isNull pathToExecutable then null else pathToExecutable.Directory
+                let status = validate version fantomasDirectory
+                versionsData.Add(toolVersion, { Version = toolVersion, version; Path = fantomasDirectory; Status = status })
         | _ ->
             versionsData.Remove(toolVersion) |> ignore
             notificationsFired.Remove(toolVersion) |> ignore
@@ -168,10 +171,10 @@ type FantomasDetector(lifetime, settingsProvider: FSharpFantomasSettingsProvider
     member x.TryRun(runAction: VirtualFileSystemPath -> unit) =
         use _ = rwLock.UsingWriteLock()
         fireNotifications()
-        let { Path = path } = versionToRun.Value
+        let { Path = path } as versionToRun = versionToRun.Value
         try runAction path
         with _ ->
-            versionToRun.Value.Status <- FailedToRun
+            versionToRun.Status <- FailedToRun
             recalculateState settingsProvider.Version.Value
             x.TryRun(runAction)
 
@@ -279,10 +282,12 @@ type FantomasPage(lifetime, smartContext: OptionsSettingsSmartContext, optionsPa
 
 [<SolutionComponent>]
 type FantomasNotificationsManager(lifetime, settings: FantomasDetector, notifications: UserNotifications,
-                                  optionsManager: OptionsManager, dotnetToolsTracker: NuGetDotnetToolsTracker) =
+                                  optionsManager: OptionsManager, dotnetToolsTracker: NuGetDotnetToolsTracker,
+                                  uiApplication: IUIApplication) =
     let goToSettings = [| UserNotificationCommand("Settings", fun _ -> optionsManager.BeginShowOptions(nameof(FantomasPage))) |]
     let openDotnetToolsOrGoToSettings toolsManifestPath =
-        [| UserNotificationCommand("Open dotnet-tools.json", fun _ -> ()); goToSettings[0] |]
+        [| UserNotificationCommand("Open dotnet-tools.json", fun _ -> uiApplication.OpenUri(toolsManifestPath))
+           goToSettings[0] |]
 
     let createFallbackMessage = function
         | SolutionDotnetTool -> ""
@@ -304,7 +309,7 @@ type FantomasNotificationsManager(lifetime, settings: FantomasDetector, notifica
         | FailedToRun ->
             match version with
             | FantomasVersion.SolutionDotnetTool ->
-                $"""Fantomas specified in "dotnet-tool.json" failed to run.<br>{fallbackMessage}"""
+                $"""Fantomas specified in 'dotnet-tool.json' failed to run.<br>{fallbackMessage}"""
             | FantomasVersion.GlobalDotnetTool ->
                 $"""Fantomas installed globally via 'dotnet tool install fantomas-tool' failed to run.<br>{fallbackMessage}"""
             | _ -> ""
@@ -312,7 +317,7 @@ type FantomasNotificationsManager(lifetime, settings: FantomasDetector, notifica
         | UnsupportedVersion ->
             match version with
             | FantomasVersion.SolutionDotnetTool ->
-                $"""Fantomas version specified in "dotnet-tool.json" is not compatible with the current Rider version.<br>{fallbackMessage}<br>Supported formatter versions: {MinimalSupportedVersion} and later."""
+                $"""Fantomas version specified in 'dotnet-tool.json' is not compatible with the current Rider version.<br>{fallbackMessage}<br>Supported formatter versions: {MinimalSupportedVersion} and later."""
             | FantomasVersion.GlobalDotnetTool ->
                 $"""Fantomas installed globally via 'dotnet tool install fantomas-tool' is not compatible with the current Rider version.<br>{fallbackMessage}<br>Supported versions: {MinimalSupportedVersion} and later."""
             | _ -> ""
@@ -321,7 +326,7 @@ type FantomasNotificationsManager(lifetime, settings: FantomasDetector, notifica
     let getCommands = function
         | FantomasVersion.SolutionDotnetTool ->
             let manifestPath = dotnetToolsTracker.GetSolutionManifestPath()
-            if manifestPath.ExistsFile then openDotnetToolsOrGoToSettings manifestPath
+            if manifestPath.ExistsFile then openDotnetToolsOrGoToSettings manifestPath.FullPath
             else goToSettings    
         | _ -> goToSettings
 

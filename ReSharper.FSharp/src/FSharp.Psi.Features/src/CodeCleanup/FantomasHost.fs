@@ -2,7 +2,6 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Services.Formatter
 
 open FSharp.Compiler.CodeAnalysis
 open FSharp.Compiler.Text
-open JetBrains.Application.Notifications
 open JetBrains.Core
 open JetBrains.Lifetimes
 open JetBrains.ProjectModel

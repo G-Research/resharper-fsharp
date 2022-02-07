@@ -22,7 +22,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <!-- update version in FantomasOptionsPage.fs if changed -->
+      <!-- update BundledVersion in FantomasOptionsPage.fs/FantomasVersions if changed -->
       <PackageReference Include="Fantomas" Version="4.5.11" />
       <PackageReference Include="FSharp.Core" Version="$(FSharpCoreVersion)" />
       <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
