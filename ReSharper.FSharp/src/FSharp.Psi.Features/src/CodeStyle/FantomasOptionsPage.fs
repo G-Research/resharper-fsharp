@@ -20,7 +20,8 @@ open JetBrains.IDE.UI.Extensions.Validation
 
 [<AutoOpen>]
 module private FantomasLiterals =
-    let [<Literal>] minimalSupportedVersion = "3.2"
+    let [<Literal>] MinimalSupportedVersion = "3.2"
+    let [<Literal>] BundledVersion = "4.5.11"
 
 type FantomasValidationResult =
     | Ok
@@ -48,7 +49,7 @@ type FantomasDetector(lifetime, settingsProvider: FSharpFantomasSettingsProvider
                       dotnetToolsTracker: NuGetDotnetToolsTracker) =
     let [<Literal>] fantomasToolPackageId = "fantomas-tool"
     let [<Literal>] fantomasPackageId = "fantomas"
-    let minimalSupportedVersion1 = Version(minimalSupportedVersion)
+    let minimalSupportedVersion = Version(MinimalSupportedVersion)
     let notificationSignal = Signal<FantomasDiagnosticNotification>()
     let rwLock = JetFastSemiReenterableRWLock()
 
@@ -57,12 +58,12 @@ type FantomasDetector(lifetime, settingsProvider: FSharpFantomasSettingsProvider
        hashset.Add(FantomasVersion.Bundled) |> ignore
        hashset
 
-    let settingsData =
+    let versionsData =
         let dict = Dictionary(3)
-        dict[Bundled] <- { Version = Bundled, minimalSupportedVersion; Path = null; Status = Ok }
+        dict[Bundled] <- { Version = Bundled, BundledVersion; Path = null; Status = Ok }
         dict
 
-    let mutable versionToRun = ViewableProperty(settingsData[Bundled])
+    let mutable versionToRun = ViewableProperty(versionsData[Bundled])
     let mutable delayedNotifications = []
 
     let calculateVersionToRun version =
@@ -72,7 +73,7 @@ type FantomasDetector(lifetime, settingsProvider: FSharpFantomasSettingsProvider
                 | FantomasVersion.SolutionDotnetTool -> FantomasVersion.GlobalDotnetTool
                 | _ -> FantomasVersion.Bundled
 
-            match settingsData.TryGetValue version with
+            match versionsData.TryGetValue(version) with
             | true, { Status = Ok } -> version, warnings
             | true, { Status = status } ->
                 let versionToRun, warnings = calculateVersionRec nextVersionToSearch warnings
@@ -96,7 +97,7 @@ type FantomasDetector(lifetime, settingsProvider: FSharpFantomasSettingsProvider
             | _ -> FantomasVersion.Bundled
 
         let version, warnings = calculateVersionToRun startToSearchVersion
-        settingsData[version], warnings
+        versionsData[version], warnings
 
     let fireNotifications () =
         for notification in delayedNotifications do
@@ -110,21 +111,21 @@ type FantomasDetector(lifetime, settingsProvider: FSharpFantomasSettingsProvider
 
     let validate version =
         match Version.TryParse(version) with
-        | true, version when version >= minimalSupportedVersion1 -> Ok
+        | true, version when version >= minimalSupportedVersion -> Ok
         | _ -> UnsupportedVersion
 
     let invalidateDotnetTool toolVersion toolInfo  =
         match toolInfo with
         | Some (version, pathToExecutable) ->
-            match settingsData.TryGetValue toolVersion with
+            match versionsData.TryGetValue(toolVersion) with
             | true, { Version = _, cachedVersion } when version = cachedVersion -> ()
             | _ ->
-                settingsData.Remove toolVersion |> ignore
-                notificationsFired.Remove toolVersion |> ignore
-                settingsData.Add(toolVersion, { Version = toolVersion, version; Path = pathToExecutable; Status = validate version })
+                versionsData.Remove(toolVersion) |> ignore
+                notificationsFired.Remove(toolVersion) |> ignore
+                versionsData.Add(toolVersion, { Version = toolVersion, version; Path = pathToExecutable; Status = validate version })
         | _ ->
-            settingsData.Remove toolVersion |> ignore
-            notificationsFired.Remove toolVersion |> ignore
+            versionsData.Remove(toolVersion) |> ignore
+            notificationsFired.Remove(toolVersion) |> ignore
     
     let invalidateDotnetTools (cache: ToolManifestCache) selectedVersion =
         cache.LocalToolManifestInfo.Tools
@@ -139,11 +140,11 @@ type FantomasDetector(lifetime, settingsProvider: FSharpFantomasSettingsProvider
 
         match selectedVersion with
         | FantomasVersionSettings.SolutionDotnetTool ->
-            if settingsData.ContainsKey SolutionDotnetTool then () else
-            settingsData[SolutionDotnetTool] <- { Version = SolutionDotnetTool, ""; Path = null; Status = SelectedButNotFound }
+            if versionsData.ContainsKey(SolutionDotnetTool) then () else
+            versionsData.Add(SolutionDotnetTool, { Version = SolutionDotnetTool, ""; Path = null; Status = SelectedButNotFound })
         | FantomasVersionSettings.GlobalDotnetTool ->
-            if settingsData.ContainsKey GlobalDotnetTool then () else
-            settingsData.Add(GlobalDotnetTool, { Version = GlobalDotnetTool, ""; Path = null; Status = SelectedButNotFound })
+            if versionsData.ContainsKey(GlobalDotnetTool) then () else
+            versionsData.Add(GlobalDotnetTool, { Version = GlobalDotnetTool, ""; Path = null; Status = SelectedButNotFound })
         | _ -> ()
 
     do
@@ -178,7 +179,7 @@ type FantomasDetector(lifetime, settingsProvider: FSharpFantomasSettingsProvider
         let settings = Dictionary<_, _>()
         use _ = rwLock.UsingReadLock()
 
-        for kvp in settingsData do
+        for kvp in versionsData do
             let key =
                 match kvp.Key with
                 | FantomasVersion.Bundled -> FantomasVersionSettings.Bundled
@@ -236,7 +237,7 @@ type FantomasPage(lifetime, smartContext: OptionsSettingsSmartContext, optionsPa
         | { Status = FailedToRun } ->
             ValidationResult(ValidationStates.validationWarning, "The specified Fantomas version failed to run.")
         | { Status = UnsupportedVersion } ->
-            ValidationResult(ValidationStates.validationWarning, $"Supported Fantomas versions: {minimalSupportedVersion} and later.")
+            ValidationResult(ValidationStates.validationWarning, $"Supported Fantomas versions: {MinimalSupportedVersion} and later.")
         | { Status = SelectedButNotFound } ->
             ValidationResult(ValidationStates.validationWarning, "The specified Fantomas version not found.")
         | _ ->
@@ -297,7 +298,7 @@ type FantomasNotificationsManager(lifetime, settings: FantomasDetector, notifica
             | FantomasVersion.SolutionDotnetTool ->
                 $"""dotnet-tools.json file not found in the solution directory.<br>{fallbackMessage}"""
             | FantomasVersion.GlobalDotnetTool ->
-                $"""Fantomas is not installed globally.<br>{fallbackMessage}<br>Supported versions: {minimalSupportedVersion} and later."""
+                $"""Fantomas is not installed globally.<br>{fallbackMessage}<br>Supported versions: {MinimalSupportedVersion} and later."""
             | _ -> ""
 
         | FailedToRun ->
@@ -311,9 +312,9 @@ type FantomasNotificationsManager(lifetime, settings: FantomasDetector, notifica
         | UnsupportedVersion ->
             match version with
             | FantomasVersion.SolutionDotnetTool ->
-                $"""Fantomas version specified in "dotnet-tool.json" is not compatible with the current Rider version.<br>{fallbackMessage}<br>Supported formatter versions: {minimalSupportedVersion} and later."""
+                $"""Fantomas version specified in "dotnet-tool.json" is not compatible with the current Rider version.<br>{fallbackMessage}<br>Supported formatter versions: {MinimalSupportedVersion} and later."""
             | FantomasVersion.GlobalDotnetTool ->
-                $"""Fantomas installed globally via 'dotnet tool install fantomas-tool' is not compatible with the current Rider version.<br>{fallbackMessage}<br>Supported versions: {minimalSupportedVersion} and later."""
+                $"""Fantomas installed globally via 'dotnet tool install fantomas-tool' is not compatible with the current Rider version.<br>{fallbackMessage}<br>Supported versions: {MinimalSupportedVersion} and later."""
             | _ -> ""
         | _ -> ""
 
