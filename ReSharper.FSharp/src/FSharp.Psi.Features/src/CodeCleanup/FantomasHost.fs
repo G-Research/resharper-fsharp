@@ -34,11 +34,9 @@ type FantomasHost(solution: ISolution, fantomasFactory: FantomasProcessFactory, 
     let terminateConnection () =
         if isConnectionAlive () then formatterHostLifetime.Terminate()
 
-    // Formatting is called on UI thread, so we don't need to synchronize it
     let connect () =
-        if isConnectionAlive () then () else
-
         fantomasDetector.TryRun(fun path ->
+            if isConnectionAlive () then () else
             formatterHostLifetime <- Lifetime.Define(solutionLifetime)
             connection <- fantomasFactory.Create(formatterHostLifetime.Lifetime, path).Run()
             formatConfigFields <- connection.Execute(fun x -> connection.ProtocolModel.GetFormatConfigFields.Sync(Unit.Instance))

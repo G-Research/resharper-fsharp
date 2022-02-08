@@ -47,7 +47,7 @@ type FSharpOptions =
 
 type FantomasVersionSettings =
     | AutoDetected = 0
-    | SolutionDotnetTool = 1
+    | LocalDotnetTool = 1
     | GlobalDotnetTool = 2
     | Bundled = 3
 
