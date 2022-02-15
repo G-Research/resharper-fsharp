@@ -61,7 +61,7 @@ type FantomasHost(solution: ISolution, fantomasFactory: FantomasProcessFactory, 
     let convertParsingOptions (options: FSharpParsingOptions) =
         let lightSyntax = Option.toNullable options.LightSyntax
         RdFcsParsingOptions(Array.last options.SourceFiles, lightSyntax,
-            List.toArray options.ConditionalCompilationDefines, options.IsExe)
+            List.toArray options.ConditionalCompilationDefines, options.LangVersionText, options.IsExe)
 
     do fantomasDetector.VersionToRun.Advise(solutionLifetime, fun _ -> terminateConnection ())
 
@@ -80,3 +80,7 @@ type FantomasHost(solution: ISolution, fantomasFactory: FantomasProcessFactory, 
 
         connect()
         connection.Execute(fun () -> connection.ProtocolModel.FormatDocument.Sync(args, RpcTimeouts.Maximal))
+
+    /// For tests
+    member x.Version() =
+        connection.Execute(fun () -> connection.ProtocolModel.GetVersion.Sync(Unit.Instance, RpcTimeouts.Maximal))

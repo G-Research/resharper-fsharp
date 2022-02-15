@@ -335,7 +335,7 @@ type FantomasNotificationsManager(lifetime, settings: FantomasDetector, notifica
         | FantomasVersion.LocalDotnetTool ->
             let manifestPath = dotnetToolsTracker.GetSolutionManifestPath()
             if isNotNull manifestPath && manifestPath.ExistsFile then openDotnetToolsOrGoToSettings manifestPath.FullPath
-            else goToSettings    
+            else goToSettings
         | _ -> goToSettings
 
     let createNotification notification =
