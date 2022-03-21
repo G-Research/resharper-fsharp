@@ -1,0 +1,37 @@
+﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	<s:String x:Key="/Default/Environment/AssemblyExplorer/XmlDocument/@EntryValue">&lt;AssemblyExplorer&gt;&#xD;
+  &lt;Assembly Path="C:\Users\berej\.nuget\packages\jetbrains.platform.core.shell\221.0.20220215.205927-eap04d\DotFiles\JetBrains.Platform.Shell.dll" /&gt;&#xD;
+&lt;/AssemblyExplorer&gt;</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=19d23168_002Df86f_002D4232_002D95b0_002D360c28eb3497/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="Type Providers 01" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;TestAncestor&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::AF85AA16-C863-42F2-AE7E-44C3E36F8883::.NETFramework,Version=v4.7.2::JetBrains.ReSharper.Plugins.FSharp.Tests.Features.FSharpCompletionTest123123.Type Providers 01&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::AF85AA16-C863-42F2-AE7E-44C3E36F8883::.NETFramework,Version=v4.7.2::JetBrains.ReSharper.Plugins.FSharp.Tests.Features.FSharpSymbolCacheTest.Module 01 - Simple&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::AF85AA16-C863-42F2-AE7E-44C3E36F8883::.NETFramework,Version=v4.7.2::JetBrains.ReSharper.Plugins.FSharp.Tests.Features.FSharpSymbolCacheTest.Il 01&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::AF85AA16-C863-42F2-AE7E-44C3E36F8883::.NETFramework,Version=v4.7.2::JetBrains.ReSharper.Plugins.FSharp.Tests.Features.FSharpSymbolCacheTest.Type Providers 01&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::AF85AA16-C863-42F2-AE7E-44C3E36F8883::.NETFramework,Version=v4.7.2::JetBrains.ReSharper.Plugins.FSharp.Tests.Features.FSharpSymbolCacheTest.Extension 01&lt;/TestId&gt;&#xD;
+  &lt;/TestAncestor&gt;&#xD;
+&lt;/SessionState&gt;</s:String>
+	
+	
+	
+	
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=e4d4fc7d_002De70a_002D4396_002D9497_002D51318e12b3b1/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="All tests from Solution" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;Solution /&gt;&#xD;
+&lt;/SessionState&gt;</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=fe58a29f_002D4803_002D4f16_002Dabf5_002D1b9b2d75a93a/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="All tests from FSharpParserTest.fs" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;And&gt;&#xD;
+    &lt;Or&gt;&#xD;
+      &lt;ProjectFile&gt;AF85AA16-C863-42F2-AE7E-44C3E36F8883/d:Parsing/f:FSharpParserTest.fs&lt;/ProjectFile&gt;&#xD;
+      &lt;TestAncestor&gt;&#xD;
+        &lt;TestId&gt;NUnit3x::AF85AA16-C863-42F2-AE7E-44C3E36F8883::.NETFramework,Version=v4.7.2::JetBrains.ReSharper.Plugins.FSharp.Tests.Features.CSharpResolveTest.Type Providers 01&lt;/TestId&gt;&#xD;
+      &lt;/TestAncestor&gt;&#xD;
+    &lt;/Or&gt;&#xD;
+    &lt;Not&gt;&#xD;
+      &lt;TestAncestor&gt;&#xD;
+        &lt;TestId&gt;NUnit3x::AF85AA16-C863-42F2-AE7E-44C3E36F8883::.NETFramework,Version=v4.7.2::JetBrains.ReSharper.Plugins.FSharp.Tests.Features.FSharpErrorsParserTest&lt;/TestId&gt;&#xD;
+        &lt;TestId&gt;NUnit3x::AF85AA16-C863-42F2-AE7E-44C3E36F8883::.NETFramework,Version=v4.7.2::JetBrains.ReSharper.Plugins.FSharp.Tests.Features.FSharpSignatureParserTest&lt;/TestId&gt;&#xD;
+        &lt;TestId&gt;NUnit3x::AF85AA16-C863-42F2-AE7E-44C3E36F8883::.NETFramework,Version=v4.7.2::JetBrains.ReSharper.Plugins.FSharp.Tests.Features.FSharpParserTest&lt;/TestId&gt;&#xD;
+      &lt;/TestAncestor&gt;&#xD;
+    &lt;/Not&gt;&#xD;
+  &lt;/And&gt;&#xD;
+&lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

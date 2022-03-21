@@ -8,6 +8,18 @@ open JetBrains.ReSharper.Plugins.FSharp.Tests
 open JetBrains.ReSharper.Psi.Caches.SymbolCache
 open JetBrains.ReSharper.TestFramework
 open NUnit.Framework
+open JetBrains.ReSharper.Psi.Modules
+
+
+[<FSharpTest>]
+type FSharpCompletionTest123123() =
+    inherit BaseTestWithTextControl()
+    
+    override x.RelativeTestDataPath = "cache/symbolCache"
+
+    [<TestReferences("FSharp.Configuration.dll")>]
+    [<TestPackages("FSharp.Configuration/1.5.0.0")>]
+    [<Test>] member x.``Type Providers 01``() = x.DoNamedTest()
 
 [<FSharpTest>]
 type FSharpSymbolCacheTest() =
@@ -81,10 +93,15 @@ type FSharpSymbolCacheTest() =
     [<Test>] member x.``Extension 01``() = x.DoNamedTest()
 
     [<Test>] member x.``Il 01``() = x.DoNamedTest()
+    
+    //[<TestReferences("FSharp.Configuration.dll")>]
+    [<Test>] member x.``Type Providers 01``() = x.DoNamedTest()
 
-    override x.DoTest(_: Lifetime, _: IProject) =
+    override x.DoTest(_: Lifetime, a: IProject) =
         let psiServices = x.Solution.GetPsiServices()
         psiServices.Files.CommitAllDocuments()
+        let targetFrameworkId = a.TargetFrameworkIds.Item(0)
+        //use compilationCookie = CompilationContextCookie.GetOrCreate(psiServices.Modules.GetPrimaryPsiModule(a, targetFrameworkId).GetContextFromModule())
         x.ExecuteWithGold(fun writer ->
             psiServices.GetComponent<SymbolCache>().TestDump(writer, true)) |> ignore
 

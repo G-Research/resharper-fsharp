@@ -16,6 +16,9 @@ type FSharpCompletionTest() =
     override x.RelativeTestDataPath = "features/completion"
 
     override x.TestType = CodeCompletionTestType.Action
+    
+    [<TestReferences("FSharp.Configuration.dll")>]
+    [<Test>] member x.``Type Providers 01``() = x.DoNamedTest()
 
     [<Test>] member x.``Attribute 01``() = x.DoNamedTest()
     [<Test>] member x.``Attribute 02``() = x.DoNamedTest()
