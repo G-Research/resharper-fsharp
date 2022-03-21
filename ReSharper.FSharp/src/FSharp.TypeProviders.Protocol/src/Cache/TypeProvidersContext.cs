@@ -1,5 +1,8 @@
+using System.Collections.Concurrent;
+using JetBrains.ReSharper.Plugins.FSharp.TypeProviders.Protocol.Models;
 using JetBrains.ReSharper.Plugins.FSharp.TypeProviders.Protocol.Utils;
 using JetBrains.Rider.FSharp.TypeProviders.Protocol.Client;
+using static FSharp.Compiler.ExtensionTyping;
 using IProvidedCustomAttributeProvider =
   JetBrains.ReSharper.Plugins.FSharp.TypeProviders.Protocol.Utils.IProvidedCustomAttributeProvider;
 
@@ -29,6 +32,10 @@ namespace JetBrains.ReSharper.Plugins.FSharp.TypeProviders.Protocol.Cache
     public DependentProvidedTypesCache<string, ApplyStaticArgumentsParameters> AppliedProvidedTypesCache { get; }
     public DependentProvidedTypesCache<int, MakeArrayTypeArgs> ArrayProvidedTypesCache { get; }
     public IProvidedCustomAttributeProvider ProvidedCustomAttributeProvider { get; }
+
+    //TODO: how to invalidate?
+    public static ConcurrentDictionary<string, ProxyProvidedTypeWithContext> ProvidedAbbreviations { get; } =
+      new ConcurrentDictionary<string, ProxyProvidedTypeWithContext>();
 
     private RdProvidedTypeProcessModel ProvidedTypeProtocol => Connection.ProtocolModel.RdProvidedTypeProcessModel;
 
