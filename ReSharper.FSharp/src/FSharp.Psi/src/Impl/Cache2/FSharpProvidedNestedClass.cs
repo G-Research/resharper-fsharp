@@ -103,7 +103,7 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
         .Select(t => new FSharpProvidedField(t, TypeElement))
         .ToList();
 
-    public MemberPresenceFlag GetMemberPresenceFlag() => MemberPresenceFlag.ACCESSIBLE_NESTED_TYPES;
+    public MemberPresenceFlag GetMemberPresenceFlag() => MemberPresenceFlag.NONE;
     public IEnumerable<string> MemberNames => GetMembers().Select(t => t.ShortName);
 
     public IClass GetSuperClass()
@@ -158,11 +158,11 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
     public override IEnumerable<IField> Fields => myTypeElement.Fields;
     public new XmlNode GetXMLDoc(bool inherit) => myTypeElement.GetXmlDoc();
 
-    public override IClass GetSuperClass()
+    /*public override IClass GetSuperClass()
     {
       var clrTypeName = new ClrTypeName(Type.BaseType.Assembly.FullName + "." + Type.BaseType.FullName);
       return clrTypeName.CreateTypeByClrName(Module).GetTypeElement() as IClass;
-    }
+    }*/
     /*Type.BaseType == null
         ? null
         : new FSharpProvidedClass(Type.BaseType, this);*/
@@ -217,7 +217,7 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
     public IEnumerable<IEvent> Events => myTypeElement.Events;
     public IEnumerable<string> MemberNames => myTypeElement.MemberNames;
     public IEnumerable<IField> Constants => FSharpProvidedTypeElement.Constants;
-    public IEnumerable<IField> Fields => myTypeElement.Fields; //TODO: fields
+    public IEnumerable<IField> Fields => myTypeElement.Fields;
     public IList<ITypeElement> NestedTypes => myTypeElement.NestedTypes;
 
     public IClrDeclaredElement OriginElement
