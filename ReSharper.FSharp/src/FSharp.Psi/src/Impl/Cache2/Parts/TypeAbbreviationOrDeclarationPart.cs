@@ -21,11 +21,7 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2.Parts
     {
     }
 
-    public override TypeElement CreateTypeElement() =>
-      IsProvidedAndGenerated &&
-      TypeProvidersContext.ProvidedAbbreviations.TryGetValue(myDeclaration.CLRName, out var type)
-        ? new FSharpProvidedAbbreviatedClass(type, this)
-        : new FSharpClass(this);
+    public override TypeElement CreateTypeElement() => new FSharpClassOrProvidedTypeAbbreviation(this);
 
     protected override byte SerializationTag => (byte)FSharpPartKind.AbbreviationOrSingleCaseUnion;
   }

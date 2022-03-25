@@ -11,7 +11,6 @@ using JetBrains.ReSharper.Plugins.FSharp.Psi.Util;
 using JetBrains.ReSharper.Plugins.FSharp.TypeProviders.Protocol.Models;
 using JetBrains.ReSharper.Plugins.FSharp.TypeProviders.Protocol.Utils;
 using JetBrains.ReSharper.Psi;
-using JetBrains.ReSharper.Psi.ExtensionsAPI.Caches2;
 using JetBrains.ReSharper.Psi.Modules;
 using JetBrains.ReSharper.Psi.Resolve;
 using JetBrains.ReSharper.Psi.Util;
@@ -32,7 +31,7 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
       TypeElement = typeElement;
     }
 
-    public static IEnumerable<IOperator> Operators => EmptyList<IOperator>.InstanceList;
+    public IEnumerable<IOperator> Operators => EmptyList<IOperator>.InstanceList;
 
     public IEnumerable<IConstructor> Constructors => Type
       .GetConstructors()
@@ -66,6 +65,8 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
       return methodGroups.Values;
     }
 
+    public IList<ITypeParameter> AllTypeParameters => EmptyList<ITypeParameter>.InstanceList;
+
     public IEnumerable<IMethod> Methods =>
       FilterMethods(Type.GetMethods().Select(t => new FSharpProvidedMethod(t, TypeElement)));
 
@@ -96,7 +97,7 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
     public IList<IDeclaredType> GetSuperTypes() => EmptyList<IDeclaredType>.Instance;
 
     public IList<ITypeElement> GetSuperTypeElements() => EmptyList<ITypeElement>.Instance;
-    public static IEnumerable<IField> Constants => EmptyList<IField>.InstanceList;
+    public IEnumerable<IField> Constants => EmptyList<IField>.InstanceList;
 
     public IEnumerable<IField> Fields =>
       Type.GetFields()
@@ -126,46 +127,6 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
 
       return false;
     }
-  }
-
-  public class FSharpProvidedAbbreviatedClass : Class, IFSharpTypeElement
-  {
-    private ProxyProvidedTypeWithContext Type { get; }
-    private readonly FSharpProvidedTypeElement myTypeElement;
-
-    public FSharpProvidedAbbreviatedClass(ProxyProvidedTypeWithContext type, [NotNull] IClassPart part) : base(part)
-    {
-      Type = type;
-      myTypeElement = new FSharpProvidedTypeElement(type, this);
-    }
-
-    public override MemberPresenceFlag GetMemberPresenceFlag() => myTypeElement.GetMemberPresenceFlag();
-
-    public string SourceName => Type.DisplayName;
-
-    public override bool HasMemberWithName(string shortName, bool ignoreCase) =>
-      myTypeElement.HasMemberWithName(shortName, ignoreCase);
-
-    public override IEnumerable<IConstructor> Constructors => myTypeElement.Constructors;
-    public override IEnumerable<IOperator> Operators => FSharpProvidedTypeElement.Operators;
-    public override IEnumerable<IMethod> Methods => myTypeElement.Methods;
-    public override IEnumerable<IProperty> Properties => myTypeElement.Properties;
-    public override IEnumerable<IEvent> Events => myTypeElement.Events;
-    public override IList<ITypeElement> NestedTypes => myTypeElement.NestedTypes;
-    public override IEnumerable<ITypeMember> GetMembers() => myTypeElement.GetMembers();
-    public override IEnumerable<string> MemberNames => myTypeElement.MemberNames;
-    public override IEnumerable<IField> Constants => FSharpProvidedTypeElement.Constants;
-    public override IEnumerable<IField> Fields => myTypeElement.Fields;
-    public new XmlNode GetXMLDoc(bool inherit) => myTypeElement.GetXmlDoc();
-
-    /*public override IClass GetSuperClass()
-    {
-      var clrTypeName = new ClrTypeName(Type.BaseType.Assembly.FullName + "." + Type.BaseType.FullName);
-      return clrTypeName.CreateTypeByClrName(Module).GetTypeElement() as IClass;
-    }*/
-    /*Type.BaseType == null
-        ? null
-        : new FSharpProvidedClass(Type.BaseType, this);*/
   }
 
   public class FSharpProvidedNestedClass : FSharpGeneratedElementBase, IClass, IFSharpTypeElement,
@@ -211,12 +172,12 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
 
     public IEnumerable<ITypeMember> GetMembers() => myTypeElement.GetMembers();
     public IEnumerable<IConstructor> Constructors => myTypeElement.Constructors;
-    public IEnumerable<IOperator> Operators => FSharpProvidedTypeElement.Operators;
+    public IEnumerable<IOperator> Operators => myTypeElement.Operators;
     public IEnumerable<IMethod> Methods => myTypeElement.Methods;
     public IEnumerable<IProperty> Properties => myTypeElement.Properties;
     public IEnumerable<IEvent> Events => myTypeElement.Events;
     public IEnumerable<string> MemberNames => myTypeElement.MemberNames;
-    public IEnumerable<IField> Constants => FSharpProvidedTypeElement.Constants;
+    public IEnumerable<IField> Constants => myTypeElement.Constants;
     public IEnumerable<IField> Fields => myTypeElement.Fields;
     public IList<ITypeElement> NestedTypes => myTypeElement.NestedTypes;
 
