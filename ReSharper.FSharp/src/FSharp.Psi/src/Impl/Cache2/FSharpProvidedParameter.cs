@@ -1,6 +1,6 @@
+using System.Xml;
 using JetBrains.ReSharper.Plugins.FSharp.Psi.Util;
 using JetBrains.ReSharper.Psi;
-using JetBrains.ReSharper.Psi.Modules;
 using static FSharp.Compiler.ExtensionTyping;
 
 namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
@@ -9,13 +9,13 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
   {
     private readonly ProvidedParameterInfo myInfo;
 
-    public FSharpProvidedParameter(ProvidedParameterInfo info, IPsiModule module,
-      IParametersOwner parametersOwner) : base(null, module)
+    public FSharpProvidedParameter(ProvidedParameterInfo info, IParametersOwner method) : base(null, method.GetContainingType())
     {
       myInfo = info;
-      ContainingParametersOwner = parametersOwner;
+      ContainingParametersOwner = method;
     }
 
+    public new XmlNode GetXMLDoc(bool inherit) => myInfo.GetXmlDoc(this);
     public override string ShortName => myInfo.Name;
     public override DeclaredElementType GetElementType() => CLRDeclaredElementType.PARAMETER;
     public IType Type => myInfo.ParameterType.MapType(Module);

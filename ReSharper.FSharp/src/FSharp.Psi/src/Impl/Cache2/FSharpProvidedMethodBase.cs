@@ -28,7 +28,7 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
     public IList<IParameter> Parameters =>
       myInfo
         .GetParameters()
-        .Select(t => (IParameter)new FSharpProvidedParameter(t, Module, this))
+        .Select(t => (IParameter)new FSharpProvidedParameter(t, this))
         .ToList();
 
     public abstract IType ReturnType { get; }

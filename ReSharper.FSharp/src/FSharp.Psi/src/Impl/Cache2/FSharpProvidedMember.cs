@@ -27,13 +27,6 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
       ContainingType = containingType;
     }
 
-    protected FSharpProvidedMember(ProvidedMemberInfo info, IPsiModule module)
-    {
-      myInfo = info;
-      Module = module;
-      ContainingType = null;
-    }
-
     //TODO: remove new modifier
     public new XmlNode GetXMLDoc(bool inherit) => myInfo.GetXmlDoc(this);
 
