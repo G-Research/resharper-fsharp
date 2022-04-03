@@ -6,19 +6,17 @@ using static FSharp.Compiler.ExtensionTyping;
 
 namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
 {
-  public class FSharpProvidedConstructor : FSharpProvidedMethodBase, IConstructor
+  public class FSharpProvidedConstructor : FSharpProvidedMethodBase<ProvidedConstructorInfo>, IConstructor
   {
-    private readonly ProvidedConstructorInfo myInfo;
-
-    public FSharpProvidedConstructor(ProvidedConstructorInfo info, [NotNull] ITypeElement containingType) : base(info, containingType)
+    public FSharpProvidedConstructor(ProvidedConstructorInfo info, [NotNull] ITypeElement containingType)
+      : base(info, containingType)
     {
-      myInfo = info;
     }
 
     public override DeclaredElementType GetElementType() => CLRDeclaredElementType.CONSTRUCTOR;
     public override string ShortName => StandardMemberNames.Constructor;
     public override IType ReturnType => TypeFactory.CreateType(ContainingType);
-    public bool IsParameterless => myInfo.GetParameters().IsEmpty();
+    public bool IsParameterless => Info.GetParameters().IsEmpty();
     public bool IsDefault => IsParameterless;
     public bool IsImplicit => false;
     public bool IsValueTypeZeroInit => false;

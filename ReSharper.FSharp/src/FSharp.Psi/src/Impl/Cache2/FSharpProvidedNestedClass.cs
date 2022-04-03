@@ -81,7 +81,7 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
         .Select(t => new FSharpProvidedEvent(t, TypeElement));
 
     public IList<ITypeElement> NestedTypes =>
-      Type.GetNestedTypes() //TODO: all?
+      Type.GetNestedTypes()
         .Select(t => (ITypeElement)new FSharpProvidedNestedClass(t, TypeElement.Module, TypeElement))
         .ToList();
 
@@ -96,6 +96,7 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
 
     public IList<IDeclaredType> GetSuperTypes() => EmptyList<IDeclaredType>.Instance;
 
+    //TODO: add interfaces
     public IList<ITypeElement> GetSuperTypeElements() => EmptyList<ITypeElement>.Instance;
     public IEnumerable<IField> Constants => Fields.Where(t => t.IsConstant);
 
@@ -109,30 +110,26 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
       var memberFlags = MemberPresenceFlag.NONE;
 
       if (Constructors.Any(t => t.IsDefault))
-        memberFlags &= MemberPresenceFlag.PUBLIC_DEFAULT_INSTANCE_CTOR_ALL_FLAGS;
+        memberFlags |= MemberPresenceFlag.PUBLIC_DEFAULT_INSTANCE_CTOR_ALL_FLAGS;
 
       if (Constructors.Any(t => !t.IsParameterless))
-        memberFlags &= MemberPresenceFlag.ACCESSIBLE_INSTANCE_CTOR_WITH_PARAMETERS;
+        memberFlags |= MemberPresenceFlag.ACCESSIBLE_INSTANCE_CTOR_WITH_PARAMETERS;
 
       if (NestedTypes.Any())
-        memberFlags &= MemberPresenceFlag.ACCESSIBLE_NESTED_TYPES;
+        memberFlags |= MemberPresenceFlag.ACCESSIBLE_NESTED_TYPES;
 
       if (Constants.Any())
-        memberFlags &= MemberPresenceFlag.ACCESSIBLE_CONSTANTS;
+        memberFlags |= MemberPresenceFlag.ACCESSIBLE_CONSTANTS;
 
       return memberFlags;
     }
 
-    public IEnumerable<string> MemberNames => GetMembers().Select(t => t.ShortName);
+    public IEnumerable<string> MemberNames => GetMembers().Select(t => t.ShortName); //ToHashSet?
 
-    public IClass GetSuperClass()
-    {
-      var clrTypeName = new ClrTypeName(Type.BaseType.Assembly.FullName + "." + Type.BaseType.FullName);
-      return clrTypeName.CreateTypeByClrName(TypeElement.Module).GetTypeElement() as IClass;
-    }
-    /*Type.BaseType == null
-        ? null
-        : new FSharpProvidedClass(Type.BaseType, this);*/
+    public IDeclaredType GetBaseClassType() =>
+      Type.BaseType?.MapType(TypeElement.Module) as IDeclaredType ?? TypeElement.Module.GetPredefinedType().Object;
+
+    public IClass GetSuperClass() => GetBaseClassType().GetClassType();
 
     //TODO: common & hashset
     public bool HasMemberWithName(string shortName, bool ignoreCase)
@@ -239,10 +236,9 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
 
     public MemberHidePolicy HidePolicy => MemberHidePolicy.HIDE_BY_NAME;
 
-    public IDeclaredType GetBaseClassType() => //
-      Module.GetPredefinedType().Object; //TypeFactory.CreateType(new FSharpProvidedClass(myType.BaseType));
+    public IDeclaredType GetBaseClassType() => myTypeElement.GetBaseClassType();
 
-    public IClass GetSuperClass() => null;
+    public IClass GetSuperClass() => myTypeElement.GetSuperClass();
     public override ISubstitution IdSubstitution => EmptySubstitution.INSTANCE;
     public override IPsiModule Module { get; }
     public override IPsiServices GetPsiServices() => Module.GetPsiServices();

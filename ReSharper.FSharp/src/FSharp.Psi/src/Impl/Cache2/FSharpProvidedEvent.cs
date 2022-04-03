@@ -5,20 +5,17 @@ using static FSharp.Compiler.ExtensionTyping;
 
 namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
 {
-  public class FSharpProvidedEvent : FSharpProvidedMember, IEvent
+  public class FSharpProvidedEvent : FSharpProvidedMember<ProvidedEventInfo>, IEvent
   {
-    private readonly ProvidedEventInfo myInfo;
-
     public FSharpProvidedEvent(ProvidedEventInfo info, ITypeElement containingType) : base(info, containingType)
     {
-      myInfo = info;
     }
 
     public override DeclaredElementType GetElementType() => CLRDeclaredElementType.EVENT;
     public IAccessor Adder => new ImplicitAccessor(this, AccessorKind.ADDER);
     public IAccessor Remover => new ImplicitAccessor(this, AccessorKind.REMOVER);
     public IAccessor Raiser => new ImplicitAccessor(this, AccessorKind.RAISER);
-    public IType Type => myInfo.EventHandlerType.MapType(Module);
+    public IType Type => Info.EventHandlerType.MapType(Module);
     public bool IsFieldLikeEvent => false;
   }
 }

@@ -11,13 +11,10 @@ using static FSharp.Compiler.ExtensionTyping;
 
 namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
 {
-  public class FSharpProvidedProperty : FSharpProvidedMember, IProperty
+  public class FSharpProvidedProperty : FSharpProvidedMember<ProvidedPropertyInfo>, IProperty
   {
-    private readonly ProvidedPropertyInfo myInfo;
-
     public FSharpProvidedProperty(ProvidedPropertyInfo info, ITypeElement containingType) : base(info, containingType)
     {
-      myInfo = info;
     }
 
     public override DeclaredElementType GetElementType() => CLRDeclaredElementType.PROPERTY;
@@ -27,13 +24,12 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
     public IEnumerable<IParametersOwnerDeclaration> GetParametersOwnerDeclarations() =>
       EmptyList<IParametersOwnerDeclaration>.Instance;
 
-    public IList<IParameter> Parameters =>
-      myInfo
-        .GetIndexParameters()
-        .Select(t => (IParameter)new FSharpProvidedParameter(t, this))
-        .ToList();
+    public IList<IParameter> Parameters => Info
+      .GetIndexParameters()
+      .Select(t => (IParameter)new FSharpProvidedParameter(t, this))
+      .ToList();
 
-    public IType Type => myInfo.PropertyType.MapType(Module);
+    public IType Type => Info.PropertyType.MapType(Module);
     public IType ReturnType => Type;
     public ReferenceKind ReturnKind => ReferenceKind.VALUE;
 
@@ -41,9 +37,9 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
 
     public IAccessor Getter => new ImplicitAccessor(this, AccessorKind.GETTER);
     public IAccessor Setter => new ImplicitAccessor(this, AccessorKind.SETTER);
-    public bool IsDefault => myInfo.Name == StandardMemberNames.DefaultIndexerName;
-    public bool IsReadable => myInfo.CanRead;
-    public bool IsWritable => myInfo.CanWrite;
+    public bool IsDefault => Info.Name == StandardMemberNames.DefaultIndexerName;
+    public bool IsReadable => Info.CanRead;
+    public bool IsWritable => Info.CanWrite;
     public bool IsAuto => true;
   }
 }

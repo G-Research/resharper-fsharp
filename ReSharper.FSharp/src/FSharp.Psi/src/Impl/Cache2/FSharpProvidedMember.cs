@@ -14,21 +14,21 @@ using static FSharp.Compiler.ExtensionTyping;
 
 namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
 {
-  public abstract class FSharpProvidedMember : FSharpGeneratedElementBase, IOverridableMember,
-    ISecondaryDeclaredElement,
-    IFSharpTypeParametersOwner
+  public abstract class FSharpProvidedMember<T> : FSharpGeneratedElementBase, IOverridableMember,
+    ISecondaryDeclaredElement, IFSharpTypeParametersOwner
+    where T : ProvidedMemberInfo
   {
-    private readonly ProvidedMemberInfo myInfo;
+    protected T Info { get; }
 
-    protected FSharpProvidedMember(ProvidedMemberInfo info, ITypeElement containingType)
+    protected FSharpProvidedMember(T info, ITypeElement containingType)
     {
-      myInfo = info;
+      Info = info;
       Module = containingType.Module;
       ContainingType = containingType;
     }
 
     //TODO: remove new modifier
-    public new XmlNode GetXMLDoc(bool inherit) => myInfo.GetXmlDoc(this);
+    public new XmlNode GetXMLDoc(bool inherit) => Info.GetXmlDoc(this);
 
     public AccessRights GetAccessRights() => AccessRights.PUBLIC;
 
@@ -63,7 +63,7 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
     public override ITypeElement GetContainingType() => ContainingType;
 
     public override ITypeMember GetContainingTypeMember() => ContainingType as ITypeMember;
-    public override string ShortName => myInfo.Name;
+    public override string ShortName => Info.Name;
     protected override IClrDeclaredElement ContainingElement => ContainingType;
     public override ISubstitution IdSubstitution => EmptySubstitution.INSTANCE;
 
@@ -71,7 +71,7 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
     {
       get
       {
-        var declaringType = myInfo.DeclaringType;
+        var declaringType = Info.DeclaringType;
         while (declaringType.DeclaringType != null) declaringType = declaringType.DeclaringType;
 
         var generatedType = (declaringType as IProxyProvidedType).NotNull();

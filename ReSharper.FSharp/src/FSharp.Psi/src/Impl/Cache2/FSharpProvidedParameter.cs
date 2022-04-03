@@ -5,11 +5,12 @@ using static FSharp.Compiler.ExtensionTyping;
 
 namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
 {
-  public class FSharpProvidedParameter : FSharpProvidedMember, IParameter //TODO
+  public class FSharpProvidedParameter : FSharpProvidedMember<ProvidedMemberInfo>, IParameter
   {
     private readonly ProvidedParameterInfo myInfo;
 
-    public FSharpProvidedParameter(ProvidedParameterInfo info, IParametersOwner method) : base(null, method.GetContainingType())
+    public FSharpProvidedParameter(ProvidedParameterInfo info, IParametersOwner method)
+      : base(null, method.GetContainingType())
     {
       myInfo = info;
       ContainingParametersOwner = method;

@@ -8,14 +8,11 @@ using static FSharp.Compiler.ExtensionTyping;
 
 namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
 {
-  public abstract class FSharpProvidedMethodBase : FSharpProvidedMember, IFunction
+  public abstract class FSharpProvidedMethodBase<T> : FSharpProvidedMember<T>, IFunction
+    where T : ProvidedMethodBase
   {
-    private readonly ProvidedMethodBase myInfo;
-
-    protected FSharpProvidedMethodBase(ProvidedMethodBase info, ITypeElement containingType) : base(info,
-      containingType)
+    protected FSharpProvidedMethodBase(T info, ITypeElement containingType) : base(info, containingType)
     {
-      myInfo = info;
     }
 
     public abstract override DeclaredElementType GetElementType();
@@ -25,11 +22,10 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
     public IEnumerable<IParametersOwnerDeclaration> GetParametersOwnerDeclarations() =>
       EmptyList<IParametersOwnerDeclaration>.Instance;
 
-    public IList<IParameter> Parameters =>
-      myInfo
-        .GetParameters()
-        .Select(t => (IParameter)new FSharpProvidedParameter(t, this))
-        .ToList();
+    public IList<IParameter> Parameters => Info
+      .GetParameters()
+      .Select(t => (IParameter)new FSharpProvidedParameter(t, this))
+      .ToList();
 
     public abstract IType ReturnType { get; }
     public ReferenceKind ReturnKind => ReferenceKind.VALUE;

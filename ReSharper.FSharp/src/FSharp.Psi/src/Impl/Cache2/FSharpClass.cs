@@ -50,6 +50,7 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
   public class FSharpClassOrProvidedTypeAbbreviation : FSharpClass
   {
     //TODO: add comment
+    // Triggers FCS resolve
     private FSharpProvidedTypeElement ProvidedClass =>
       myParts is TypeAbbreviationOrDeclarationPart { IsProvidedAndGenerated: true } &&
       TypeProvidersContext.ProvidedAbbreviations.TryGetValue(GetClrName().FullName, out var type)
@@ -58,11 +59,6 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
 
     public FSharpClassOrProvidedTypeAbbreviation([NotNull] IClassPart part) : base(part)
     {
-      /*myProvidedClass = new(() =>
-        part is TypeAbbreviationOrDeclarationPart { IsProvidedAndGenerated: true } &&
-        TypeProvidersContext.ProvidedAbbreviations.TryGetValue(GetClrName().FullName, out var type)
-          ? new FSharpProvidedTypeElement(type, this)
-          : null);*/
     }
 
     protected override MemberDecoration Modifiers => myParts.GetModifiers();
@@ -99,6 +95,7 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
     public override IEnumerable<IField> Constants => ProvidedClass is { } x ? x.Constants : base.Constants;
     public override IEnumerable<IField> Fields => ProvidedClass is { } x ? x.Fields : base.Fields;
 
+    //TODO: fix
     public new XmlNode GetXMLDoc(bool inherit) =>
       ProvidedClass is { } x ? x.GetXmlDoc() : base.GetXMLDoc(inherit);
   }
