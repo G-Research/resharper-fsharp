@@ -159,8 +159,7 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Util
       }
 
       if (entity.IsProvidedAndGenerated && // hide ProvidedAbbreviations in psi module?
-          TypeProvidersContext.ProvidedAbbreviations.TryGetValue(clrName.FullName, out var providedType) &&
-          providedType.DeclaringType != null)
+          TypeProvidersContext.ProvidedAbbreviations.TryGetValue(clrName.FullName, out var providedType))
         return MapType(providedType, psiModule);
 
       var declaredType = clrName.CreateTypeByClrName(psiModule);
@@ -177,10 +176,10 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Util
     [NotNull]
     public static IType MapType([NotNull] this ProvidedType providedType, IPsiModule module)
     {
-      if (!(providedType is IProxyProvidedType proxyProvidedType))
+      if (providedType is not ProxyProvidedTypeWithContext proxyProvidedType)
         return TypeFactory.CreateUnknownType(module);
 
-      if (proxyProvidedType.IsCreatedByProvider)
+      if (proxyProvidedType.IsCreatedByProvider && proxyProvidedType.DeclaringType is {})
         return TypeFactory.CreateType(new FSharpProvidedNestedClass(providedType, module));
 
       if (providedType.IsArray)

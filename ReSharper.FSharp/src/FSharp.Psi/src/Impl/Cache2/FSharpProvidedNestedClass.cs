@@ -152,14 +152,12 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
     {
       Module = module;
       Type = type;
+      myContainingType = containingType;
       myTypeElement = new FSharpProvidedTypeElement(type, this);
-      ContainingType = containingType ??
-                       (type.DeclaringType is { DeclaringType: { } }
-                         ? new FSharpProvidedNestedClass(type.DeclaringType, module)
-                         : (ITypeElement)OriginElement);
     }
 
-    public ProvidedType Type { get; }
+    private ProvidedType Type { get; }
+    private readonly ITypeElement myContainingType;
     private readonly FSharpProvidedTypeElement myTypeElement;
     public override ITypeElement GetContainingType() => ContainingType;
     public override ITypeMember GetContainingTypeMember() => ContainingType as ITypeMember;
@@ -169,8 +167,8 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
     public override string ShortName => Type.Name;
     public override bool IsValid() => OriginElement is { } x && x.IsValid();
 
-    //get from type and cache
-    public IClrTypeName GetClrName() => new ClrTypeName($"{Type.Namespace}.{Type.Name}"); //get from type?
+    public IClrTypeName GetClrName() =>
+      Type is ProxyProvidedTypeWithContext x ? x.GetClrName() : EmptyClrTypeName.Instance;
 
     public IList<IDeclaredType> GetSuperTypes() => myTypeElement.GetSuperTypes();
     public IList<ITypeElement> GetSuperTypeElements() => myTypeElement.GetSuperTypeElements();
@@ -178,7 +176,6 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
 
     public INamespace GetContainingNamespace() =>
       ContainingType.GetContainingNamespace(); //get abbreviated type and then hist namespace
-
 
     public IPsiSourceFile GetSingleOrDefaultSourceFile() => null;
 
@@ -229,15 +226,10 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
     public string XMLDocId => XMLDocUtil.GetTypeElementXmlDocId(this);
     public IList<TypeMemberInstance> GetHiddenMembers() => EmptyList<TypeMemberInstance>.Instance;
     public Hash? CalcHash() => null;
-    public ITypeElement ContainingType { get; }
-
-    //TODO
+    public ITypeElement ContainingType => myContainingType ?? Type.DeclaringType.MapType(Module).GetTypeElement();
     public AccessibilityDomain AccessibilityDomain => new(AccessibilityDomain.AccessibilityDomainType.PUBLIC, null);
-
     public MemberHidePolicy HidePolicy => MemberHidePolicy.HIDE_BY_NAME;
-
     public IDeclaredType GetBaseClassType() => myTypeElement.GetBaseClassType();
-
     public IClass GetSuperClass() => myTypeElement.GetSuperClass();
     public override ISubstitution IdSubstitution => EmptySubstitution.INSTANCE;
     public override IPsiModule Module { get; }
@@ -247,7 +239,7 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
     public override bool Equals(object obj) =>
       obj switch
       {
-        FSharpProvidedNestedClass x => ProvidedTypesComparer.Instance.Equals(x.Type, Type), //TODO: compare entity ids
+        FSharpProvidedNestedClass x => ProvidedTypesComparer.Instance.Equals(x.Type, Type),
         _ => false
       };
 
