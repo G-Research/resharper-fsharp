@@ -19,7 +19,7 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
     public override string ShortName => StandardMemberNames.Constructor;
     public override IType ReturnType => TypeFactory.CreateType(ContainingType);
     public bool IsParameterless => myInfo.GetParameters().IsEmpty();
-    public bool IsDefault => false;
+    public bool IsDefault => IsParameterless;
     public bool IsImplicit => false;
     public bool IsValueTypeZeroInit => false;
   }

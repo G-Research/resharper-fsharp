@@ -97,14 +97,32 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
     public IList<IDeclaredType> GetSuperTypes() => EmptyList<IDeclaredType>.Instance;
 
     public IList<ITypeElement> GetSuperTypeElements() => EmptyList<ITypeElement>.Instance;
-    public IEnumerable<IField> Constants => EmptyList<IField>.InstanceList;
+    public IEnumerable<IField> Constants => Fields.Where(t => t.IsConstant);
 
     public IEnumerable<IField> Fields =>
       Type.GetFields()
         .Select(t => new FSharpProvidedField(t, TypeElement))
         .ToList();
 
-    public MemberPresenceFlag GetMemberPresenceFlag() => MemberPresenceFlag.NONE;
+    public MemberPresenceFlag GetMemberPresenceFlag()
+    {
+      var memberFlags = MemberPresenceFlag.NONE;
+
+      if (Constructors.Any(t => t.IsDefault))
+        memberFlags &= MemberPresenceFlag.PUBLIC_DEFAULT_INSTANCE_CTOR_ALL_FLAGS;
+
+      if (Constructors.Any(t => !t.IsParameterless))
+        memberFlags &= MemberPresenceFlag.ACCESSIBLE_INSTANCE_CTOR_WITH_PARAMETERS;
+
+      if (NestedTypes.Any())
+        memberFlags &= MemberPresenceFlag.ACCESSIBLE_NESTED_TYPES;
+
+      if (Constants.Any())
+        memberFlags &= MemberPresenceFlag.ACCESSIBLE_CONSTANTS;
+
+      return memberFlags;
+    }
+
     public IEnumerable<string> MemberNames => GetMembers().Select(t => t.ShortName);
 
     public IClass GetSuperClass()

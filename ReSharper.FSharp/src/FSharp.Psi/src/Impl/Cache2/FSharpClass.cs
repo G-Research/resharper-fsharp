@@ -67,6 +67,9 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
 
     protected override MemberDecoration Modifiers => myParts.GetModifiers();
 
+    public override MemberPresenceFlag GetMemberPresenceFlag() =>
+      ProvidedClass is { } x ? x.GetMemberPresenceFlag() : base.GetMemberPresenceFlag();
+
     public override IClass GetSuperClass() => ProvidedClass is { } x ? x.GetSuperClass() : base.GetSuperClass();
 
     public override IList<ITypeElement> GetSuperTypeElements() =>
@@ -86,17 +89,17 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
         : base.HasMemberWithName(shortName, ignoreCase);
 
     public override IEnumerable<IConstructor> Constructors =>
-      ProvidedClass is {} x ? x.Constructors : base.Constructors;
+      ProvidedClass is { } x ? x.Constructors : base.Constructors;
 
-    public override IEnumerable<IOperator> Operators => ProvidedClass is {} x ? x.Operators : base.Operators;
-    public override IEnumerable<IMethod> Methods => ProvidedClass is {} x ? x.Methods : base.Methods;
-    public override IEnumerable<IProperty> Properties => ProvidedClass is {} x ? x.Properties : base.Properties;
-    public override IEnumerable<IEvent> Events => ProvidedClass is {} x ? x.Events : base.Events;
-    public override IEnumerable<string> MemberNames => ProvidedClass is {} x ? x.MemberNames : base.MemberNames;
-    public override IEnumerable<IField> Constants => ProvidedClass is {} x ? x.Constants : base.Constants;
-    public override IEnumerable<IField> Fields => ProvidedClass is {} x ? x.Fields : base.Fields;
+    public override IEnumerable<IOperator> Operators => ProvidedClass is { } x ? x.Operators : base.Operators;
+    public override IEnumerable<IMethod> Methods => ProvidedClass is { } x ? x.Methods : base.Methods;
+    public override IEnumerable<IProperty> Properties => ProvidedClass is { } x ? x.Properties : base.Properties;
+    public override IEnumerable<IEvent> Events => ProvidedClass is { } x ? x.Events : base.Events;
+    public override IEnumerable<string> MemberNames => ProvidedClass is { } x ? x.MemberNames : base.MemberNames;
+    public override IEnumerable<IField> Constants => ProvidedClass is { } x ? x.Constants : base.Constants;
+    public override IEnumerable<IField> Fields => ProvidedClass is { } x ? x.Fields : base.Fields;
 
     public new XmlNode GetXMLDoc(bool inherit) =>
-      ProvidedClass is {} x ? x.GetXmlDoc() : base.GetXMLDoc(inherit);
+      ProvidedClass is { } x ? x.GetXmlDoc() : base.GetXMLDoc(inherit);
   }
 }
