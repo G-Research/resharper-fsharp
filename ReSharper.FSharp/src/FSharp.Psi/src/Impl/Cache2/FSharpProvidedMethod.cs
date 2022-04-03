@@ -12,13 +12,13 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
     {
     }
 
-    public override IType ReturnType => Info.ReturnType.MapType(Module);
     public IList<ITypeParameter> TypeParameters => EmptyList<ITypeParameter>.InstanceList;
+    public override DeclaredElementType GetElementType() => CLRDeclaredElementType.METHOD;
+    public override IType ReturnType => Info.ReturnType.MapType(Module);
+    public override bool IsAbstract => Info.IsAbstract;
+    public override bool IsStatic => Info.IsStatic;
     public bool IsExtensionMethod => false;
     public bool IsAsync => false;
     public bool IsVarArg => false;
-    public override bool IsStatic => Info.IsStatic;
-    public override bool IsAbstract => Info.IsAbstract;
-    public override DeclaredElementType GetElementType() => CLRDeclaredElementType.METHOD;
   }
 }

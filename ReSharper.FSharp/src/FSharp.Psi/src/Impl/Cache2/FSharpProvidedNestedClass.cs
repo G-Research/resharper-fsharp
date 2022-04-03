@@ -109,11 +109,14 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
     {
       var memberFlags = MemberPresenceFlag.NONE;
 
-      if (Constructors.Any(t => t.IsDefault))
-        memberFlags |= MemberPresenceFlag.PUBLIC_DEFAULT_INSTANCE_CTOR_ALL_FLAGS;
+      foreach (var constructor in Constructors)
+      {
+        if (constructor.IsDefault)
+          memberFlags |= MemberPresenceFlag.PUBLIC_DEFAULT_INSTANCE_CTOR_ALL_FLAGS;
 
-      if (Constructors.Any(t => !t.IsParameterless))
-        memberFlags |= MemberPresenceFlag.ACCESSIBLE_INSTANCE_CTOR_WITH_PARAMETERS;
+        else if (constructor.IsParameterless)
+          memberFlags |= MemberPresenceFlag.ACCESSIBLE_INSTANCE_CTOR_WITH_PARAMETERS;
+      }
 
       if (NestedTypes.Any())
         memberFlags |= MemberPresenceFlag.ACCESSIBLE_NESTED_TYPES;
@@ -145,8 +148,7 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
   }
 
   public class FSharpProvidedNestedClass : FSharpGeneratedElementBase, IClass, IFSharpTypeElement,
-    IFSharpTypeParametersOwner,
-    ISecondaryDeclaredElement
+    IFSharpTypeParametersOwner, ISecondaryDeclaredElement
   {
     public FSharpProvidedNestedClass(ProvidedType type, IPsiModule module, ITypeElement containingType = null)
     {
@@ -198,10 +200,10 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
       get
       {
         var declaringType = Type.DeclaringType;
-        while (declaringType.DeclaringType != null) declaringType = declaringType.DeclaringType;
+        while (declaringType.DeclaringType != null)
+          declaringType = declaringType.DeclaringType;
 
-        var generatedType = (declaringType as IProxyProvidedType).NotNull();
-        return generatedType.GetClrName().CreateTypeByClrName(Module).GetTypeElement();
+        return declaringType.MapType(Module).GetTypeElement();
       }
     }
 

@@ -43,7 +43,7 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
     public virtual bool IsExtern => false;
     public virtual bool IsUnsafe => false;
     public virtual bool IsVolatile => false;
-    public string XMLDocId => XMLDocUtil.GetTypeMemberXmlDocId(this, ShortName); //"M:Test.Union.NewB(System.Int32)";
+    public string XMLDocId => XMLDocUtil.GetTypeMemberXmlDocId(this, ShortName);
 
     public IList<TypeMemberInstance> GetHiddenMembers() => EmptyList<TypeMemberInstance>.Instance;
 
