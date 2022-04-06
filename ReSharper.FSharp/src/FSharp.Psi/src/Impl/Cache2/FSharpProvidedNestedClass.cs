@@ -19,13 +19,13 @@ using static FSharp.Compiler.ExtensionTyping;
 
 namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
 {
-  public class FSharpProvidedTypeElement
+  public class FSharpProvidedTypeElement<T> where T : ITypeMember, IFSharpTypeElement
   {
     private ProvidedType Type { get; }
-    private IFSharpTypeElement TypeElement { get; }
-    public XmlNode GetXmlDoc() => Type.GetXmlDoc(null); //TODO: should be not null
+    private T TypeElement { get; }
+    public XmlNode GetXmlDoc() => Type.GetXmlDoc(TypeElement); //TODO: should be not null
 
-    public FSharpProvidedTypeElement(ProvidedType type, [NotNull] IFSharpTypeElement typeElement)
+    public FSharpProvidedTypeElement(ProvidedType type, [NotNull] T typeElement)
     {
       Type = type;
       TypeElement = typeElement;
@@ -155,12 +155,12 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
       Module = module;
       Type = type;
       myContainingType = containingType;
-      myTypeElement = new FSharpProvidedTypeElement(type, this);
+      myTypeElement = new FSharpProvidedTypeElement<FSharpProvidedNestedClass>(type, this);
     }
 
     private ProvidedType Type { get; }
     private readonly ITypeElement myContainingType;
-    private readonly FSharpProvidedTypeElement myTypeElement;
+    private readonly FSharpProvidedTypeElement<FSharpProvidedNestedClass> myTypeElement;
     public override ITypeElement GetContainingType() => ContainingType;
     public override ITypeMember GetContainingTypeMember() => ContainingType as ITypeMember;
     public override DeclaredElementType GetElementType() => CLRDeclaredElementType.CLASS;
@@ -176,8 +176,7 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
     public IList<ITypeElement> GetSuperTypeElements() => myTypeElement.GetSuperTypeElements();
     public MemberPresenceFlag GetMemberPresenceFlag() => myTypeElement.GetMemberPresenceFlag();
 
-    public INamespace GetContainingNamespace() =>
-      ContainingType.GetContainingNamespace(); //get abbreviated type and then hist namespace
+    public INamespace GetContainingNamespace() => ((ITypeElement)OriginElement).GetContainingNamespace();
 
     public IPsiSourceFile GetSingleOrDefaultSourceFile() => null;
 
