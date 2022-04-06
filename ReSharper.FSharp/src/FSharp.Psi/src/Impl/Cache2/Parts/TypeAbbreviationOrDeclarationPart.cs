@@ -1,7 +1,6 @@
 using FSharp.Compiler.Symbols;
 using JetBrains.Annotations;
 using JetBrains.ReSharper.Plugins.FSharp.Psi.Tree;
-using JetBrains.ReSharper.Plugins.FSharp.TypeProviders.Protocol.Cache;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.ExtensionsAPI.Caches2;
 
@@ -9,12 +8,9 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2.Parts
 {
   internal class TypeAbbreviationOrDeclarationPart : TypeAbbreviationOrDeclarationPartBase, Class.IClassPart
   {
-    private readonly IFSharpTypeDeclaration myDeclaration;
-
     public TypeAbbreviationOrDeclarationPart([NotNull] IFSharpTypeDeclaration declaration,
       [NotNull] ICacheBuilder cacheBuilder) : base(declaration, cacheBuilder)
     {
-      myDeclaration = declaration;
     }
 
     public TypeAbbreviationOrDeclarationPart(IReader reader) : base(reader)

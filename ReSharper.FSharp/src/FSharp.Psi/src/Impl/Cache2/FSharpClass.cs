@@ -45,6 +45,8 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
 
     public virtual IList<ITypeParameter> AllTypeParameters =>
       this.GetAllTypeParametersReversed();
+
+    public new virtual XmlNode GetXMLDoc(bool inherit) => base.GetXMLDoc(inherit);
   }
 
   public class FSharpClassOrProvidedTypeAbbreviation : FSharpClass
@@ -95,8 +97,7 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
     public override IEnumerable<IField> Constants => ProvidedClass is { } x ? x.Constants : base.Constants;
     public override IEnumerable<IField> Fields => ProvidedClass is { } x ? x.Fields : base.Fields;
 
-    //TODO: fix
-    public new XmlNode GetXMLDoc(bool inherit) =>
+    public override XmlNode GetXMLDoc(bool inherit) =>
       ProvidedClass is { } x ? x.GetXmlDoc() : base.GetXMLDoc(inherit);
   }
 }
