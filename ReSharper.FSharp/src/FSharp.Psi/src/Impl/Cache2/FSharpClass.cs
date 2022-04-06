@@ -2,7 +2,6 @@
 using System.Xml;
 using JetBrains.Annotations;
 using JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2.Parts;
-using JetBrains.ReSharper.Plugins.FSharp.TypeProviders.Protocol.Cache;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.ExtensionsAPI.Caches2;
 using JetBrains.Util;
@@ -47,57 +46,5 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
       this.GetAllTypeParametersReversed();
 
     public new virtual XmlNode GetXMLDoc(bool inherit) => base.GetXMLDoc(inherit);
-  }
-
-  public class FSharpClassOrProvidedTypeAbbreviation : FSharpClass
-  {
-    //TODO: add comment
-    // Triggers FCS resolve
-    private FSharpProvidedTypeElement ProvidedClass =>
-      myParts is TypeAbbreviationOrDeclarationPart { IsProvidedAndGenerated: true } &&
-      TypeProvidersContext.ProvidedAbbreviations.TryGetValue(GetClrName().FullName, out var type)
-        ? new FSharpProvidedTypeElement(type, this)
-        : null;
-
-    public FSharpClassOrProvidedTypeAbbreviation([NotNull] IClassPart part) : base(part)
-    {
-    }
-
-    protected override MemberDecoration Modifiers => myParts.GetModifiers();
-
-    public override MemberPresenceFlag GetMemberPresenceFlag() =>
-      ProvidedClass is { } x ? x.GetMemberPresenceFlag() : base.GetMemberPresenceFlag();
-
-    public override IClass GetSuperClass() => ProvidedClass is { } x ? x.GetSuperClass() : base.GetSuperClass();
-
-    public override IList<ITypeElement> GetSuperTypeElements() =>
-      ProvidedClass is { } x ? x.GetSuperTypeElements() : base.GetSuperTypeElements();
-
-    public override IEnumerable<ITypeMember> GetMembers() =>
-      ProvidedClass is { } x ? x.GetMembers() : base.GetMembers();
-
-    public override IList<ITypeElement> NestedTypes => ProvidedClass is { } x ? x.NestedTypes : base.NestedTypes;
-
-    public override IList<ITypeParameter> AllTypeParameters =>
-      ProvidedClass is { } x ? x.AllTypeParameters : base.AllTypeParameters;
-
-    public override bool HasMemberWithName(string shortName, bool ignoreCase) =>
-      ProvidedClass is { } x
-        ? x.HasMemberWithName(shortName, ignoreCase)
-        : base.HasMemberWithName(shortName, ignoreCase);
-
-    public override IEnumerable<IConstructor> Constructors =>
-      ProvidedClass is { } x ? x.Constructors : base.Constructors;
-
-    public override IEnumerable<IOperator> Operators => ProvidedClass is { } x ? x.Operators : base.Operators;
-    public override IEnumerable<IMethod> Methods => ProvidedClass is { } x ? x.Methods : base.Methods;
-    public override IEnumerable<IProperty> Properties => ProvidedClass is { } x ? x.Properties : base.Properties;
-    public override IEnumerable<IEvent> Events => ProvidedClass is { } x ? x.Events : base.Events;
-    public override IEnumerable<string> MemberNames => ProvidedClass is { } x ? x.MemberNames : base.MemberNames;
-    public override IEnumerable<IField> Constants => ProvidedClass is { } x ? x.Constants : base.Constants;
-    public override IEnumerable<IField> Fields => ProvidedClass is { } x ? x.Fields : base.Fields;
-
-    public override XmlNode GetXMLDoc(bool inherit) =>
-      ProvidedClass is { } x ? x.GetXmlDoc() : base.GetXMLDoc(inherit);
   }
 }
