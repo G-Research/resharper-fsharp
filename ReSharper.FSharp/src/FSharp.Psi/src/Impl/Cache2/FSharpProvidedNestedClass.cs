@@ -94,10 +94,8 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
         .Union(NestedTypes.Cast<ITypeMember>())
         .ToList();
 
-    public IList<IDeclaredType> GetSuperTypes() => EmptyList<IDeclaredType>.Instance;
-
-    //TODO: add interfaces
-    public IList<ITypeElement> GetSuperTypeElements() => EmptyList<ITypeElement>.Instance;
+    public IList<IDeclaredType> GetSuperTypes() => CalculateSuperTypes().ToList();
+    public IList<ITypeElement> GetSuperTypeElements() => GetSuperTypes().ToTypeElements();
     public IEnumerable<IField> Constants => Fields.Where(t => t.IsConstant);
 
     public IEnumerable<IField> Fields =>
@@ -145,6 +143,16 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
 
       return false;
     }
+
+    private IEnumerable<IDeclaredType> CalculateSuperTypes()
+    {
+      yield return GetBaseClassType();
+      foreach (var type in Type.GetInterfaces())
+      {
+        if (type.MapType(TypeElement.Module) is IDeclaredType declType)
+          yield return declType;
+      }
+    }
   }
 
   public class FSharpProvidedNestedClass : FSharpGeneratedElementBase, IClass, IFSharpTypeElement,
@@ -152,6 +160,7 @@ namespace JetBrains.ReSharper.Plugins.FSharp.Psi.Impl.Cache2
   {
     public FSharpProvidedNestedClass(ProvidedType type, IPsiModule module, ITypeElement containingType = null)
     {
+      Assertion.Assert(!type.IsInterface);
       Module = module;
       Type = type;
       myContainingType = containingType;
